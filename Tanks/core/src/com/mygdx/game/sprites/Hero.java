@@ -74,6 +74,7 @@ public class Hero extends DynamicGameObject{
 
     public void draw(SpriteBatch spriteBatch, float deltaTime)  {
         this.spriteBatch = spriteBatch;
+        
         TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
         this.spriteBatch.draw(currentFrame, position.x, position.y);
     }
