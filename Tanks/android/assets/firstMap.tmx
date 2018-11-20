@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="34" height="34" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="74">
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="34" height="34" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="79">
  <tileset firstgid="1" source="tankSheet.tsx"/>
  <layer id="1" name="Background" width="34" height="34">
   <data encoding="base64" compression="zlib">
@@ -8,9 +8,14 @@
  </layer>
  <layer id="2" name="MapVisualization" width="34" height="34">
   <data encoding="base64" compression="zlib">
-   eJzt1ckJACAMRNG0kKbsvySvYY4uWeA/kOApg0Q1AwD85BcLmDQHk7ICp7q/2dP+mM7ZgAweauV9cKlVNIeeQ3Y+7ZedQ/utsH8xHxsrFgSY
+   eJzt1bEJACAMRFFXyFJO4f5z2Mo1FsbEyH8gkiqHRG0NAHCTHSyg0hxUyvqTsanh6/U3u9of83I2IIIte+Z9MNmzaA49h+h82i86h/brS+0xHxMWkAVQ
   </data>
  </layer>
+ <objectgroup id="5" name="Water">
+  <object id="74" x="240" y="272" width="32" height="16"/>
+  <object id="75" x="240" y="288" width="32" height="16"/>
+  <object id="78" x="304" y="272" width="32" height="32"/>
+ </objectgroup>
  <objectgroup id="3" name="Base">
   <object id="2" x="224" y="512" width="32" height="32"/>
  </objectgroup>
