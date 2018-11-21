@@ -67,40 +67,40 @@ public class Hero extends DynamicGameObject{
 
     public void moveUp() {
         currAnimation = upMoveAnimation;
-        position.y += velocity;
-        bounds.y += velocity;
-        muzzle.set(position.x + (HERO_WIDTH / 4.0f), position.y + HERO_HEIGHT);
+        getPosition().y += velocity;
+        getBounds().y += velocity;
+        muzzle.set(getPosition().x + (HERO_WIDTH / 4.0f), getPosition().y + HERO_HEIGHT);
         direction = Direction.UP;
     }
 
     public void moveDown() {
         currAnimation = downMoveAnimation;
-        position.y -= velocity;
-        bounds.y -= velocity;
-        muzzle.set(position.x + (HERO_WIDTH / 4.0f), position.y - (HERO_HEIGHT / 2.0f));
+        getPosition().y -= velocity;
+        getBounds().y -= velocity;
+        muzzle.set(getPosition().x + (HERO_WIDTH / 4.0f), getPosition().y - (HERO_HEIGHT / 2.0f));
         direction = Direction.DOWN;
     }
 
     public void moveLeft() {
         currAnimation = leftMoveAnimation;
-        position.x -= velocity;
-        bounds.x -= velocity;
-        muzzle.set(position.x - (HERO_WIDTH / 4.0f), position.y + (HERO_HEIGHT / 4.0f));
+        getPosition().x -= velocity;
+        getBounds().x -= velocity;
+        muzzle.set(getPosition().x - (HERO_WIDTH / 4.0f), getPosition().y + (HERO_HEIGHT / 4.0f));
         direction = Direction.LEFT;
     }
 
     public void moveRight() {
         currAnimation = rightMoveAnimation;
-        position.x += velocity;
-        bounds.x += velocity;
-        muzzle.set(position.x + (HERO_WIDTH), position.y + (HERO_HEIGHT / 4.0f));
+        getPosition().x += velocity;
+        getBounds().x += velocity;
+        muzzle.set(getPosition().x + (HERO_WIDTH), getPosition().y + (HERO_HEIGHT / 4.0f));
         direction = Direction.RIGHT;
     }
 
     public void draw(SpriteBatch spriteBatch, float deltaTime)  {
         this.spriteBatch = spriteBatch;
         TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
-        spriteBatch.draw(currentFrame, position.x, position.y);
+        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
         for (Bullet bullet : bullets) {
             bullet.update();
             bullet.draw(spriteBatch);

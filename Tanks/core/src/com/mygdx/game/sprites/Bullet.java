@@ -25,7 +25,7 @@ public class Bullet extends DynamicGameObject {
 
     public void draw(SpriteBatch spriteBatch) {
         this.spriteBatch = spriteBatch;
-        spriteBatch.draw(textureRegion, position.x, position.y);
+        spriteBatch.draw(textureRegion, getPosition().x, getPosition().y);
     }
 
     public void update() {
@@ -35,16 +35,16 @@ public class Bullet extends DynamicGameObject {
     private void move(Direction direction) {
         switch (direction) {
             case RIGHT:
-                position.x += velocity;
+                getPosition().x += velocity;
                 break;
             case LEFT:
-                position.x -= velocity;
+                getPosition().x -= velocity;
                 break;
             case DOWN:
-                position.y -= velocity;
+                getPosition().y -= velocity;
                 break;
             case UP:
-                position.y += velocity;
+                getPosition().y += velocity;
                 break;
         }
     }

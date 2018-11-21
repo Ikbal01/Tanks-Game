@@ -12,14 +12,16 @@ import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.*;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.Tanks;
+import com.mygdx.game.sprites.Brick;
 import com.mygdx.game.sprites.Hero;
 
 public class BattleScreen implements Screen {
-    private static final int WORLD_WIDTH = 544;
-    private static final int WORLD_HEIGHT = 544;
+    private static final int WORLD_WIDTH = 448;
+    private static final int WORLD_HEIGHT = 448;
 
     private Tanks game;
     private OrthographicCamera camera;
@@ -32,28 +34,31 @@ public class BattleScreen implements Screen {
     public static Texture items;
 
     private Hero hero;
+    private Array<Brick> bricks;
     private float stateTime;
+
+    public int horizontalCellCount;
+    public int verticalCellCount;
 
     public BattleScreen(Tanks game) {
 
         items = new Texture(Gdx.files.internal("BattleTanksSheet.png"));
-
 
         this.game = game;
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("firstMap.tmx");
+        map = mapLoader.load("standardMap.tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
         camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
-        hero = new Hero(0, 0);
+        hero = new Hero(32, 0);
 
-    }
+        horizontalCellCount = 26;
+        verticalCellCount = 26;
 
-    @Override
-    public void show() {
+        setBricks();
 
     }
 
@@ -77,6 +82,20 @@ public class BattleScreen implements Screen {
         handleInput();
         camera.update();
         renderer.setView(camera);
+    }
+
+    public void setBricks() {
+        bricks = new Array<Brick>();
+        TiledMapTileLayer layer = (TiledMapTileLayer) map.getLayers().get(1);
+
+        for (MapObject cell : map.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
+            bricks.add(new Brick(cell, layer));
+        }
+    }
+
+    @Override
+    public void show() {
+
     }
 
     @Override
