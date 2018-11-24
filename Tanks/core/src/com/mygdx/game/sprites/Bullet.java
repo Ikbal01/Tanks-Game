@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mygdx.game.enums.Direction;
 import com.mygdx.game.screens.BattleScreen;
+import com.mygdx.game.world.World;
 
 public class Bullet extends DynamicGameObject {
     private static final int BULLET_WIDTH = 16;
@@ -14,13 +15,17 @@ public class Bullet extends DynamicGameObject {
 
     private SpriteBatch spriteBatch;
 
+    private boolean isDestroyed;
+
     public Bullet(float x, float y, Direction direction) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
         this.direction = direction;
         int pos = this.direction.getColmn() * 8;
 
         velocity = 4.5f;
-        textureRegion = new TextureRegion(BattleScreen.items,  642 + pos,  200, BULLET_WIDTH, BULLET_HEIGHT);
+        textureRegion = new TextureRegion(World.items,  642 + pos,  200, BULLET_WIDTH, BULLET_HEIGHT);
+
+        isDestroyed = false;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -36,16 +41,29 @@ public class Bullet extends DynamicGameObject {
         switch (direction) {
             case RIGHT:
                 getPosition().x += velocity;
+                getBounds().x +=velocity;
                 break;
             case LEFT:
                 getPosition().x -= velocity;
+                getBounds().x -= velocity;
                 break;
             case DOWN:
                 getPosition().y -= velocity;
+                getBounds().y -= velocity;
                 break;
             case UP:
                 getPosition().y += velocity;
+                getBounds().y += velocity;
                 break;
         }
+    }
+
+
+    public boolean isDestroyed() {
+        return isDestroyed;
+    }
+
+    public void setDestroyed() {
+        isDestroyed = true;
     }
 }

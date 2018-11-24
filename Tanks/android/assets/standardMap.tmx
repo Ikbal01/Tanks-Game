@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="26" height="26" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="300">
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="26" height="26" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="313">
  <tileset firstgid="1" source="tankSheet.tsx"/>
+ <tileset firstgid="401" source="tankSheet16.tsx"/>
  <layer id="1" name="Background" width="26" height="26">
   <data encoding="base64" compression="zlib">
    eJztw0ENAAAMA6FzUf9OJ2MfSFg1VVV9ele3PL0=
@@ -8,7 +9,7 @@
  </layer>
  <layer id="2" name="MapVisualization" width="26" height="26">
   <data encoding="base64" compression="zlib">
-   eJxjYKAPECRSHl0dLnFSzac1oNT+gXY/DCCHN7XwKKAcoOcDQjSyPmLjdBRQDoiJH2zxgY8/CigHhOoVcmlc5o8C6gJS42Owg6HmH1Lbb244xAnpBwDGCQXs
+   eJxjYKAPECRSHl0dLnFSzac1oNT+gXY/DCCHN7XwKKAcoOcDQjSyPmLjdBRQDoiJH2zxgY8/CigHhOoVcmlc5g8nQO0yYiEjBJPqBmJoSu2hFyDHPwMJSG2/ueEQJ6QfAA9HCKc=
   </data>
  </layer>
  <objectgroup id="3" name="Bricks">
@@ -289,6 +290,18 @@
   <object id="296" x="224" y="16" width="16" height="16"/>
   <object id="297" x="224" y="16" width="16"/>
   <object id="299" x="224" y="0" width="16" height="16"/>
+  <object id="300" x="16" y="320" width="16" height="16"/>
+  <object id="301" x="16" y="304" width="16" height="16"/>
+  <object id="303" x="32" y="304" width="16" height="16"/>
+  <object id="304" x="32" y="320" width="16" height="16"/>
+  <object id="305" x="48" y="320" width="16" height="16"/>
+  <object id="306" x="48" y="304" width="16" height="16"/>
+  <object id="307" x="64" y="304" width="16" height="16"/>
+  <object id="308" x="64" y="320" width="16" height="16"/>
+  <object id="309" x="336" y="320" width="16" height="16"/>
+  <object id="310" x="352" y="320" width="16" height="16"/>
+  <object id="311" x="336" y="336" width="16" height="16"/>
+  <object id="312" x="352" y="336" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="4" name="Base">
   <object id="1" x="192" y="384" width="32" height="32"/>

@@ -10,4 +10,5 @@ public class DynamicGameObject extends GameObject {
         super(x, y, width, height);
         velocity  = 2;
     }
+
 }
