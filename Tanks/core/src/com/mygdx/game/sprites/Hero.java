@@ -10,10 +10,7 @@ import com.mygdx.game.enums.Direction;
 import com.mygdx.game.enums.TankCategory;
 import com.mygdx.game.world.World;
 
-public class Hero extends DynamicGameObject{
-    private static final int HERO_WIDTH = 32;
-    private static final int HERO_HEIGHT = 32;
-
+public class Hero extends Tank{
     private SpriteBatch spriteBatch;
 
     private Animation<TextureRegion> upMoveAnimation;
@@ -32,9 +29,9 @@ public class Hero extends DynamicGameObject{
     private Array<Bullet> bullets;
 
     public Hero(float x, float y) {
-        super(x, y, 32, 32);
+        super(x, y, TANK_WIDTH, TANK_HEIGHT);
 
-        muzzle = new Vector2(x + (HERO_WIDTH / 2.0f), y + HERO_HEIGHT);
+        muzzle = new Vector2(x + (TANK_WIDTH / 4.0f), y + TANK_HEIGHT);
 
         color = Color.GREEN;
         category = TankCategory.LIGHT;
@@ -50,73 +47,82 @@ public class Hero extends DynamicGameObject{
         bullets = new Array<Bullet>();
     }
 
-    public Animation<TextureRegion> getAnimation(Color color, TankCategory category, Direction direction) {
+    private Animation<TextureRegion> getAnimation(Color color, TankCategory category, Direction direction) {
         TextureRegion[] moveFrames = new TextureRegion[2];
-        int x = HERO_WIDTH * color.getX() + HERO_WIDTH * direction.getColmn();
-        int y = HERO_HEIGHT * color.getY() + HERO_HEIGHT * category.getRow();
+        int x = TANK_WIDTH * color.getX() + TANK_WIDTH * direction.getColmn();
+        int y = TANK_HEIGHT * color.getY() + TANK_HEIGHT * category.getRow();
 
-        moveFrames[0] = new TextureRegion(World.items, x, y, HERO_WIDTH, HERO_HEIGHT);
-        moveFrames[1] = new TextureRegion(World.items, x + HERO_WIDTH, y, HERO_WIDTH, HERO_HEIGHT);
+        moveFrames[0] = new TextureRegion(World.items, x, y, TANK_WIDTH, TANK_HEIGHT);
+        moveFrames[1] = new TextureRegion(World.items, x + TANK_WIDTH, y, TANK_WIDTH, TANK_HEIGHT);
 
         return new Animation<TextureRegion>(FRAME_DURATION, moveFrames);
     }
 
     public void update() {
-        Bullet bullet;
-
         for (int i = 0; i < bullets.size; i++) {
-            bullet = bullets.get(i);
-            if (bullet.isDestroyed()) {
+            if (bullets.get(i).isDestroyed()) {
                 bullets.removeIndex(i);
+                i--;
             }
         }
     }
 
     public void fire() {
-        bullets.add(new Bullet(muzzle.x, muzzle.y, direction));
+        bullets.add(new Bullet(muzzle.x, muzzle.y, direction, spriteBatch));
     }
 
     public void moveUp() {
+        setVerticalRail();
         currAnimation = upMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().y += velocity;
         getBounds().y += velocity;
-        muzzle.set(getPosition().x + (HERO_WIDTH / 4.0f), getPosition().y + HERO_HEIGHT);
+        muzzle.set(getPosition().x + 12, getPosition().y + TANK_HEIGHT);
         direction = Direction.UP;
     }
 
     public void moveDown() {
+        setVerticalRail();
         currAnimation = downMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().y -= velocity;
         getBounds().y -= velocity;
-        muzzle.set(getPosition().x + (HERO_WIDTH / 4.0f), getPosition().y - (HERO_HEIGHT / 2.0f));
+        muzzle.set(getPosition().x + 12, getPosition().y);
         direction = Direction.DOWN;
     }
 
     public void moveLeft() {
+        setHorizontalRail();
         currAnimation = leftMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().x -= velocity;
         getBounds().x -= velocity;
-        muzzle.set(getPosition().x - (HERO_WIDTH / 4.0f), getPosition().y + (HERO_HEIGHT / 4.0f));
+        muzzle.set(getPosition().x, getPosition().y + 12);
         direction = Direction.LEFT;
     }
 
     public void moveRight() {
+        setHorizontalRail();
         currAnimation = rightMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().x += velocity;
         getBounds().x += velocity;
-        muzzle.set(getPosition().x + (HERO_WIDTH), getPosition().y + (HERO_HEIGHT / 4.0f));
+        muzzle.set(getPosition().x + (TANK_WIDTH), getPosition().y + 12);
         direction = Direction.RIGHT;
     }
 
-    public void moveBack() {
-        getPosition().x = previousPosition.x;
-        getPosition().y = previousPosition.y;
-        getBounds().x = previousPosition.x;
-        getBounds().y = previousPosition.y;
+    private void setHorizontalRail() {
+        if (direction == Direction.UP || direction == Direction.DOWN) {
+            getBounds().y = getBounds().y - (getBounds().y % 8);
+            getPosition().y = getPosition().y - (getPosition().y % 8);
+        }
+    }
+
+    private void setVerticalRail() {
+        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+            getBounds().x = getBounds().x - (getBounds().x % 8);
+            getPosition().x = getPosition().x - (getPosition().x % 8);
+        }
     }
 
     public void draw(SpriteBatch spriteBatch, float deltaTime)  {
@@ -128,7 +134,7 @@ public class Hero extends DynamicGameObject{
 
         for (Bullet bullet : bullets) {
             bullet.update();
-            bullet.draw(spriteBatch);
+            bullet.draw(deltaTime);
         }
     }
 
@@ -142,5 +148,13 @@ public class Hero extends DynamicGameObject{
 
     public void setTankCategory(TankCategory category) {
         this.category = category;
+    }
+
+    @Override
+    public void respondBrickCollision() {
+        getPosition().x = previousPosition.x;
+        getPosition().y = previousPosition.y;
+        getBounds().x = previousPosition.x;
+        getBounds().y = previousPosition.y;
     }
 }

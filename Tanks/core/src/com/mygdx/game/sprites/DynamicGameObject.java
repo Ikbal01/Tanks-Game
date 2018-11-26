@@ -1,6 +1,6 @@
 package com.mygdx.game.sprites;
 
-public class DynamicGameObject extends GameObject {
+public abstract class DynamicGameObject extends GameObject {
     public static final float FRAME_DURATION = 0.25f;
 
     protected float velocity;
@@ -10,5 +10,7 @@ public class DynamicGameObject extends GameObject {
         super(x, y, width, height);
         velocity  = 2;
     }
+
+    public abstract void respondBrickCollision();
 
 }

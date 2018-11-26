@@ -5,6 +5,9 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
 
 public class StaticGameObject extends GameObject {
+    public static int TILE_WIDTH = 8;
+    public static int TILE_HEIGHT = 8;
+
     private MapObject cell;
     private TiledMapTileLayer layer;
 
@@ -19,13 +22,12 @@ public class StaticGameObject extends GameObject {
         isDestroyed = false;
     }
 
-    public void destroyLayer() {
-        int x = (int)(getPosition().x / 8 );
-        int y = (int)(getPosition().y / 8 );
+    protected void destroyLayer() {
+        int x = (int)(getPosition().x / TILE_WIDTH );
+        int y = (int)(getPosition().y / TILE_HEIGHT );
 
 
         if (layer.getCell(x, y) != null) {
-
             layer.getCell(x, y).setTile(null);
         }
     }

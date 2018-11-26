@@ -3,7 +3,7 @@ package com.mygdx.game.sprites;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Rectangle;
 
-public class GameObject {
+public abstract class GameObject {
     private Vector2 position;
     private Rectangle bounds;
 
