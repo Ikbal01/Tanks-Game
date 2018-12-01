@@ -24,7 +24,7 @@ public class Bullet extends DynamicGameObject {
     private boolean isDestroyed;
     private boolean isExplode;
 
-    private float explosionDuration = 15f;
+    private float explosionDuration = 5f;
     private float elapsed = 0f;
 
     public Bullet(float x, float y, Direction direction, SpriteBatch spriteBatch) {
@@ -47,7 +47,7 @@ public class Bullet extends DynamicGameObject {
         } else if (elapsed < explosionDuration) {
             TextureRegion currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
             spriteBatch.draw(currentFrame, bigBounds.x, bigBounds.y);
-            elapsed += deltaTime;
+            elapsed += 1;
         } else {
             isDestroyed = true;
         }
@@ -153,7 +153,7 @@ public class Bullet extends DynamicGameObject {
     }
 
     @Override
-    public void respondBrickCollision() {
+    public void respondWallCollision() {
         for (int i = 0; i < 3; i++) {
             move(direction);
         }

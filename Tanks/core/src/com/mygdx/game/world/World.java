@@ -14,15 +14,17 @@ import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.sprites.*;
 
 public class World {
-    public static final int WORLD_WIDTH = 448;
-    public static final int WORLD_HEIGHT = 448;
+    public static final int WORLD_WIDTH = 416;
+    public static final int WORLD_HEIGHT = 416;
 
     public static final int MAP_WIDTH = 416;
     public static final int MAP_HEIGHT = 416;
 
+    public static final int CELL_SIZE = 8;
+
     public static final int BIG_TILE_STANDARD = 32;
 
-    private SpriteBatch batch;
+    private SpriteBatch spriteBatch;
     public static Texture items;
 
     private TmxMapLoader mapLoader;
@@ -30,26 +32,49 @@ public class World {
     private OrthogonalTiledMapRenderer renderer;
 
     private Hero hero;
+    private Array<Enemy> enemies;
+
+    private Array<Steel> steels;
     private Array<Brick> bricks;
 
-    public World(SpriteBatch batch) {
-        this.batch = batch;
+    public World(SpriteBatch spriteBatch) {
+        this.spriteBatch = spriteBatch;
         items = new Texture(Gdx.files.internal("BattleTanksSheet.png"));
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("stage1.tmx");
+        map = mapLoader.load("map1.tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
 
-        hero = new Hero(0, 32);
+        hero = new Hero(0, 0, spriteBatch);
+        enemies = new Array<Enemy>();
+        enemies.add(new Enemy(0, 384, spriteBatch));
+        enemies.add(new Enemy(0, 384, spriteBatch));
+        enemies.add(new Enemy(384, 384, spriteBatch));
+        enemies.add(new Enemy(384, 384, spriteBatch));
+
         setBricks();
+        setSteels();
     }
 
     public void update() {
         handleInput();
 
-        checkBrickCollision(hero.getBullets());
-        for (Bullet bullet : hero.getBullets()) {
-            checkMapBoundsCollision(bullet);
+        for (Enemy enemy : enemies) {
+            checkBrickCollision(enemy);
+            checkMapBoundsCollision(enemy);
+
+            if (enemy.getBullet() != null) {
+                checkBrickCollision(enemy.getBullet());
+                checkMapBoundsCollision(enemy.getBullet());
+            }
+        }
+
+        if (hero.getBullet() != null) {
+            checkBrickCollision(hero.getBullet());
+            checkMapBoundsCollision(hero.getBullet());
+            if (!hero.getBullet().isExplode()) {
+                checkEnemyCollision(hero.getBullet());
+            }
         }
     }
 
@@ -70,7 +95,6 @@ public class World {
             hero.moveUp();
             checkBrickCollision(hero);
             checkMapBoundsCollision(hero);
-
         } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             hero.moveDown();
             checkBrickCollision(hero);
@@ -78,26 +102,34 @@ public class World {
         }
     }
 
-    private void checkBrickCollision(Tank tank) {
-        for (Brick brick : bricks) {
-            if (tank.getBounds().overlaps(brick.getBounds())) {
-                tank.respondBrickCollision();
+    private void checkEnemyCollision(Bullet bullet) {
+        for (int i = 0; i < enemies.size; i++) {
+            if (bullet.getBounds().overlaps(enemies.get(i).getBounds())) {
+                bullet.respondWallCollision();
+                enemies.removeIndex(i);
+                break;
             }
         }
     }
 
-    private void checkBrickCollision(Array<Bullet> bullets) {
-        for (Bullet bullet : bullets) {
-            if (bulletCollidesWithBricks(bullet)) {
-                for (int i = 0; i < bricks.size; i++) {
-                    if (bullet.getBigBounds().overlaps(bricks.get(i).getBounds())) {
-                        bricks.get(i).destroy();
-                        bricks.removeIndex(i);
-                        i--;
-                    }
-                }
-                bullet.respondBrickCollision();
+    private void checkBrickCollision(Tank tank) {
+        for (Brick brick : bricks) {
+            if (tank.getBounds().overlaps(brick.getBounds())) {
+                tank.respondWallCollision();
             }
+        }
+    }
+
+    private void checkBrickCollision(Bullet bullet) {
+        if (bulletCollidesWithBricks(bullet)) {
+            for (int i = 0; i < bricks.size; i++) {
+                if (bullet.getBigBounds().overlaps(bricks.get(i).getBounds())) {
+                    bricks.get(i).destroy();
+                    bricks.removeIndex(i);
+                    i--;
+                }
+            }
+            bullet.respondWallCollision();
         }
     }
 
@@ -118,12 +150,11 @@ public class World {
         int y = (int)dynamicGameObject.getPosition().y;
         int objectWidth = (int)dynamicGameObject.getBounds().getWidth();
 
-        if (x < 0 || y < 0 || x > MAP_WIDTH - objectWidth || y > MAP_HEIGHT - objectWidth) {
-            dynamicGameObject.respondBrickCollision();
+        if (x < 0 || y < 0 || x > MAP_WIDTH - objectWidth
+                || y > MAP_HEIGHT - objectWidth) {
+            dynamicGameObject.respondWallCollision();
         }
     }
-
-
 
     private void setBricks() {
         bricks = new Array<Brick>();
@@ -132,7 +163,15 @@ public class World {
         for (MapObject cell : map.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
             bricks.add(new Brick(cell, layer));
         }
-        System.out.println(bricks.size);
+    }
+
+    private void setSteels() {
+        steels = new Array<Steel>();
+        TiledMapTileLayer layer = (TiledMapTileLayer) map.getLayers().get(1);
+
+        for (MapObject cell : map.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
+            steels.add(new Steel(cell, layer));
+        }
     }
 
     public OrthogonalTiledMapRenderer getRenderer() {
@@ -140,6 +179,10 @@ public class World {
     }
 
     public void draw(float stateTime) {
-        hero.draw(batch, stateTime);
+        hero.draw(stateTime);
+        for (Enemy enemy : enemies) {
+            enemy.draw(stateTime);
+        }
     }
+
 }

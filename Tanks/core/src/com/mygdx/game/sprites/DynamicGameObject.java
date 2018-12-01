@@ -8,9 +8,9 @@ public abstract class DynamicGameObject extends GameObject {
 
     public DynamicGameObject(float x, float y, float width, float height) {
         super(x, y, width, height);
-        velocity  = 2;
+        velocity  = 1.2f;
     }
 
-    public abstract void respondBrickCollision();
+    public abstract void respondWallCollision();
 
 }
