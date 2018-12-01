@@ -71,7 +71,9 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     public void moveUp() {
-        setVerticalRail();
+        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+            setVerticalRail();
+        }
         currAnimation = upMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().y += velocity;
@@ -81,7 +83,9 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     public void moveDown() {
-        setVerticalRail();
+        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+            setVerticalRail();
+        }
         currAnimation = downMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().y -= velocity;
@@ -91,7 +95,9 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     public void moveLeft() {
-        setHorizontalRail();
+        if (direction == Direction.UP || direction == Direction.DOWN) {
+            setHorizontalRail();
+        }
         currAnimation = leftMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().x -= velocity;
@@ -101,7 +107,9 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     public void moveRight() {
-        setHorizontalRail();
+        if (direction == Direction.UP || direction == Direction.DOWN) {
+            setHorizontalRail();
+        }
         currAnimation = rightMoveAnimation;
         previousPosition = new Vector2(getPosition());
         getPosition().x += velocity;
@@ -111,27 +119,23 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     protected void setHorizontalRail() {
-        if (direction == Direction.UP || direction == Direction.DOWN) {
-            remainder = (getPosition().y % World.CELL_SIZE);
-            addition = 8;
-            if (remainder < (World.CELL_SIZE / 2)) {
-                addition = 0;
-            }
-            getBounds().y = (int)((getBounds().y - remainder) + addition);
-            getPosition().y = (int)((getPosition().y - remainder) + addition);
+        remainder = (getPosition().y % World.CELL_SIZE);
+        addition = 8;
+        if (remainder < (World.CELL_SIZE / 2)) {
+            addition = 0;
         }
+        getBounds().y = ((int)(getBounds().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        getPosition().y = ((int)(getPosition().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
     }
 
     protected void setVerticalRail() {
-        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
-            remainder = (getPosition().x % World.CELL_SIZE);
-            addition = 8;
-            if (remainder < (World.CELL_SIZE / 2)) {
-                addition = 0;
-            }
-            getBounds().x = (int)((getBounds().x - remainder) + addition);
-            getPosition().x = (int)((getPosition().x - remainder) + addition);
+        remainder = (getPosition().x % World.CELL_SIZE);
+        addition = 8;
+        if (remainder < (World.CELL_SIZE / 2)) {
+            addition = 0;
         }
+        getBounds().x = ((int)(getBounds().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        getPosition().x = ((int)(getPosition().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
     }
 
     public Bullet getBullet() {

@@ -9,7 +9,7 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.title = "Tanks";
-		config.width = 768;
+		config.width = 880;
 		config.height = 768;
 		new LwjglApplication(new Tanks(), config);
 

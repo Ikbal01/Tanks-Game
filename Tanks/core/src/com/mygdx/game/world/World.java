@@ -14,8 +14,8 @@ import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.sprites.*;
 
 public class World {
-    public static final int WORLD_WIDTH = 416;
-    public static final int WORLD_HEIGHT = 416;
+    public static final int WORLD_WIDTH = 512;
+    public static final int WORLD_HEIGHT = 448;
 
     public static final int MAP_WIDTH = 416;
     public static final int MAP_HEIGHT = 416;
@@ -42,15 +42,15 @@ public class World {
         items = new Texture(Gdx.files.internal("BattleTanksSheet.png"));
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("map1.tmx");
+        map = mapLoader.load("stage1.tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
 
-        hero = new Hero(0, 0, spriteBatch);
+        hero = new Hero(16, 16, spriteBatch);
         enemies = new Array<Enemy>();
-        enemies.add(new Enemy(0, 384, spriteBatch));
-        enemies.add(new Enemy(0, 384, spriteBatch));
-        enemies.add(new Enemy(384, 384, spriteBatch));
-        enemies.add(new Enemy(384, 384, spriteBatch));
+        enemies.add(new Enemy(16, 400, spriteBatch));
+        enemies.add(new Enemy(16, 400, spriteBatch));
+        enemies.add(new Enemy(400, 400, spriteBatch));
+        enemies.add(new Enemy(400, 400, spriteBatch));
 
         setBricks();
         setSteels();
@@ -59,18 +59,22 @@ public class World {
     public void update() {
         handleInput();
 
+
         for (Enemy enemy : enemies) {
             checkBrickCollision(enemy);
             checkMapBoundsCollision(enemy);
+            checkSteelCollision(enemy);
 
             if (enemy.getBullet() != null) {
                 checkBrickCollision(enemy.getBullet());
+                checkSteelCollision(enemy.getBullet());
                 checkMapBoundsCollision(enemy.getBullet());
             }
         }
 
         if (hero.getBullet() != null) {
             checkBrickCollision(hero.getBullet());
+            checkSteelCollision(hero.getBullet());
             checkMapBoundsCollision(hero.getBullet());
             if (!hero.getBullet().isExplode()) {
                 checkEnemyCollision(hero.getBullet());
@@ -87,18 +91,25 @@ public class World {
             hero.moveRight();
             checkBrickCollision(hero);
             checkMapBoundsCollision(hero);
+            checkSteelCollision(hero);
         } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
             hero.moveLeft();
             checkBrickCollision(hero);
             checkMapBoundsCollision(hero);
+            checkSteelCollision(hero);
+
         } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
             hero.moveUp();
             checkBrickCollision(hero);
             checkMapBoundsCollision(hero);
+            checkSteelCollision(hero);
+
         } else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             hero.moveDown();
             checkBrickCollision(hero);
             checkMapBoundsCollision(hero);
+            checkSteelCollision(hero);
+
         }
     }
 
@@ -120,6 +131,15 @@ public class World {
         }
     }
 
+    private void checkSteelCollision(Tank tank) {
+        for (Steel steel : steels) {
+            if (tank.getBounds().overlaps(steel.getBounds())) {
+                tank.respondWallCollision();
+
+            }
+        }
+    }
+
     private void checkBrickCollision(Bullet bullet) {
         if (bulletCollidesWithBricks(bullet)) {
             for (int i = 0; i < bricks.size; i++) {
@@ -134,15 +154,22 @@ public class World {
     }
 
     private boolean bulletCollidesWithBricks(Bullet bullet) {
-        if (bullet.isExplode()) {
-            return false;
-        }
-        for (Brick brick : bricks) {
-            if (bullet.getBounds().overlaps(brick.getBounds())) {
-                return true;
+        if (!bullet.isExplode()) {
+            for (Brick brick : bricks) {
+                if (bullet.getBounds().overlaps(brick.getBounds())) {
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    private void checkSteelCollision(Bullet bullet) {
+        for (Steel steel : steels) {
+            if (bullet.getBounds().overlaps(steel.getBounds())) {
+                bullet.respondWallCollision();
+            }
+        }
     }
 
     private void checkMapBoundsCollision(DynamicGameObject dynamicGameObject) {
@@ -150,8 +177,8 @@ public class World {
         int y = (int)dynamicGameObject.getPosition().y;
         int objectWidth = (int)dynamicGameObject.getBounds().getWidth();
 
-        if (x < 0 || y < 0 || x > MAP_WIDTH - objectWidth
-                || y > MAP_HEIGHT - objectWidth) {
+        if (x < 16 || y < 16 || x > (MAP_WIDTH + 16) - objectWidth
+                || y > (MAP_HEIGHT + 16) - objectWidth) {
             dynamicGameObject.respondWallCollision();
         }
     }
