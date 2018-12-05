@@ -1,52 +1,56 @@
 package com.mygdx.game.sprites;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mygdx.game.enums.Direction;
 
 import java.util.Random;
 
 public class Enemy extends Tank {
     private static float DIRECTION_CHANGE_TIME = 180f;
+    private static float FIRE_TIME_DURATION = 60f;
+
+    public enum State {SPAWNING, NORMAL, EXPLODING};
+    public State currentState;
+
     private Random random;
     private float elapsedTime = 0;
     private float fireTime = 0;
-    private static float fireTimeDuration = 60f;
 
     public Enemy(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, spriteBatch);
         random = new Random();
+
+        currentState = State.NORMAL;
     }
 
     public void update() {
         elapsedTime++;
         if (DIRECTION_CHANGE_TIME < elapsedTime) {
             moveRandomCorridor();
+            elapsedTime = 0;
         }
 
 
-        if (bullet != null && bullet.isDestroyed()) {
+        if (bullet != null && bullet.getState() == Bullet.State.DESTROYED) {
             bullet = null;
         }
 
         move();
 
         fireTime++;
-        if (fireTimeDuration < fireTime) {
+        if (FIRE_TIME_DURATION < fireTime) {
             fire();
             fireTime = 0;
         }
-    }
 
-    public void draw(float deltaTime)  {
-        update();
+        switch (currentState) {
+            case NORMAL:
 
-        TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
-        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
-
-        if (bullet != null) {
-            bullet.update();
-            bullet.draw(deltaTime);
+                break;
+            case SPAWNING:
+                break;
+            case EXPLODING:
+                break;
         }
     }
 
@@ -63,9 +67,6 @@ public class Enemy extends Tank {
                         direction = Direction.RIGHT;
                 }
                 setHorizontalRail();
-                System.out.println(getPosition().x + " " + getPosition().y);
-
-                elapsedTime = 0;
             }
         } else {
             if ((getPosition().x - 16) % 32 < 4) {
@@ -78,9 +79,6 @@ public class Enemy extends Tank {
                         direction = Direction.DOWN;
                 }
                 setVerticalRail();
-                System.out.println(getPosition().x + " " + getPosition().y);
-
-                elapsedTime = 0;
             }
         }
     }
@@ -121,7 +119,7 @@ public class Enemy extends Tank {
     }
 
     @Override
-    public void respondWallCollision() {
+    public void respondBrickCollision() {
         getPosition().x = previousPosition.x;
         getPosition().y = previousPosition.y;
         getBounds().x = previousPosition.x;
@@ -131,5 +129,32 @@ public class Enemy extends Tank {
 
         setVerticalRail();
         setHorizontalRail();
+    }
+
+    @Override
+    public void respondSteelCollision() {
+        respondBrickCollision();
+    }
+
+    @Override
+    public void respondMapBoundsCollision() {
+        respondBrickCollision();
+    }
+
+    @Override
+    public void respondTankCollision() {
+        respondBrickCollision();
+    }
+
+    @Override
+    public void respondBulletCollision() {
+        currentState = State.EXPLODING;
+        explode(deltaTime);
+    }
+
+    @Override
+    public void draw(float deltaTime)  {
+        update();
+        super.draw(deltaTime);
     }
 }

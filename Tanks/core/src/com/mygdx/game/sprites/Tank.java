@@ -1,10 +1,11 @@
 package com.mygdx.game.sprites;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.enums.Color;
 import com.mygdx.game.enums.Direction;
 import com.mygdx.game.enums.TankCategory;
@@ -31,8 +32,10 @@ public abstract class Tank extends DynamicGameObject {
 
     protected Bullet bullet;
 
-    public double remainder;
-    public int addition;
+    private double remainder;
+    private int addition;
+
+    protected float deltaTime;
 
     public Tank(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, TANK_WIDTH, TANK_HEIGHT);
@@ -51,6 +54,7 @@ public abstract class Tank extends DynamicGameObject {
 
         currAnimation = upMoveAnimation;
 
+        previousPosition = new Vector2(getPosition());
     }
 
     private Animation<TextureRegion> getAnimation(Color color, TankCategory category, Direction direction) {
@@ -64,6 +68,18 @@ public abstract class Tank extends DynamicGameObject {
         return new Animation<TextureRegion>(FRAME_DURATION, moveFrames);
     }
 
+    @Override
+    public void draw(float deltaTime)  {
+        this.deltaTime = deltaTime;
+        TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
+        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
+
+        if (bullet != null) {
+            bullet.update();
+            bullet.draw(deltaTime);
+        }
+    }
+
     public void fire() {
         if (bullet == null) {
             bullet = new Bullet(muzzle.x, muzzle.y, direction, spriteBatch);
@@ -75,7 +91,8 @@ public abstract class Tank extends DynamicGameObject {
             setVerticalRail();
         }
         currAnimation = upMoveAnimation;
-        previousPosition = new Vector2(getPosition());
+        previousPosition.set(getPosition());
+
         getPosition().y += velocity;
         getBounds().y += velocity;
         muzzle.set(getPosition().x + 12, getPosition().y + TANK_HEIGHT);
@@ -87,7 +104,8 @@ public abstract class Tank extends DynamicGameObject {
             setVerticalRail();
         }
         currAnimation = downMoveAnimation;
-        previousPosition = new Vector2(getPosition());
+        previousPosition.set(getPosition());
+
         getPosition().y -= velocity;
         getBounds().y -= velocity;
         muzzle.set(getPosition().x + 12, getPosition().y);
@@ -99,7 +117,8 @@ public abstract class Tank extends DynamicGameObject {
             setHorizontalRail();
         }
         currAnimation = leftMoveAnimation;
-        previousPosition = new Vector2(getPosition());
+        previousPosition.set(getPosition());
+
         getPosition().x -= velocity;
         getBounds().x -= velocity;
         muzzle.set(getPosition().x, getPosition().y + 12);
@@ -111,7 +130,7 @@ public abstract class Tank extends DynamicGameObject {
             setHorizontalRail();
         }
         currAnimation = rightMoveAnimation;
-        previousPosition = new Vector2(getPosition());
+        previousPosition.set(getPosition());
         getPosition().x += velocity;
         getBounds().x += velocity;
         muzzle.set(getPosition().x + (TANK_WIDTH), getPosition().y + 12);
@@ -138,6 +157,25 @@ public abstract class Tank extends DynamicGameObject {
         getPosition().x = ((int)(getPosition().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
     }
 
+    @Override
+    protected void setExplosionAnimation() {
+        TextureRegion[] explosionFrames = new TextureRegion[2];
+
+        Texture tempTexture = new Texture(Gdx.files.internal("explosion\\explosion1.png"));
+        explosionFrames[0] = new TextureRegion(tempTexture, 64, 64);
+
+        tempTexture = new Texture(Gdx.files.internal("explosion\\explosion2.png"));
+        explosionFrames[1] = new TextureRegion(tempTexture, 64, 64);
+
+        explosionAnimation = new  Animation<TextureRegion>(0.4f, explosionFrames);
+    }
+
+    @Override
+    protected void explode(float deltaTime) {
+        TextureRegion currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
+        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
+    }
+
     public Bullet getBullet() {
         return bullet;
     }
@@ -149,4 +187,5 @@ public abstract class Tank extends DynamicGameObject {
     public void setTankCategory(TankCategory category) {
         this.category = category;
     }
+
 }
