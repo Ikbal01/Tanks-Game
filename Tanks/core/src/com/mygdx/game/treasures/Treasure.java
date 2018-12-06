@@ -1,19 +1,57 @@
 package com.mygdx.game.treasures;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.game.sprites.GameObject;
 import com.mygdx.game.world.World;
 
 public abstract class Treasure extends GameObject {
-    protected SpriteBatch spriteBatch;
-    protected int lifeTime;
-    protected int time;
+    public static final float LIFE_TIME = 12f;
+
+    public enum TreasureType {BASE_DEFENDER, ENEMY_KILLER,
+        EXTRA_LIFE, SHIELD, TANK_IMPROVER, TIME_STOPPER, WALL_BREAKER}
+
+    private Texture texture;
+    public enum State {ACTIVE, EXPIRED, USED}
+    private State currentState;
+    private SpriteBatch spriteBatch;
+    private long startTime;
+    private TreasureType type;
 
     public Treasure(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, World.PIXELS_32, World.PIXELS_32);
         this.spriteBatch = spriteBatch;
-        time = 0;
+        startTime = System.currentTimeMillis();
+        currentState = State.ACTIVE;
     }
 
-    public abstract void draw(float deltaTime);
+    public void update() {
+        if (LIFE_TIME < ((System.currentTimeMillis() - startTime) / 1000.0)) {
+            currentState = State.EXPIRED;
+        }
+    }
+
+    public void draw() {
+        spriteBatch.draw(texture, getPosition().x, getPosition().y);
+    }
+
+    public State getState() {
+        return currentState;
+    }
+
+    protected void setTexture(Texture texture) {
+        this.texture = texture;
+    }
+
+    public void respondTankCollision() {
+        currentState = State.USED;
+    }
+
+    public TreasureType getType() {
+        return type;
+    }
+
+    protected void setType(TreasureType type) {
+        this.type = type;
+    }
 }

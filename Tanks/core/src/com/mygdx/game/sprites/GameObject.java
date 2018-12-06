@@ -4,8 +4,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Rectangle;
 
 public abstract class GameObject {
-    private Vector2 position;
-    private Rectangle bounds;
+    protected Vector2 position;
+    protected Rectangle bounds;
 
     public GameObject(float x, float y, float width, float height) {
         this.position = new Vector2(x, y);

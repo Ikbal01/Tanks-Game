@@ -12,6 +12,8 @@ public class Bullet extends DynamicGameObject {
     private static final int BULLET_WIDTH = 8;
     private static final int BULLET_HEIGHT = 8;
 
+    private static final float EXPLOSION_DURATION = 7f;
+
     private SpriteBatch spriteBatch;
 
     private Texture texture;
@@ -23,12 +25,11 @@ public class Bullet extends DynamicGameObject {
     private Rectangle bigBounds;
 
     public enum State {FLYING, EXPLODING, DESTROYED};
-    public State currentState;
+    private State currentState;
 
     private float deltaTime;
 
-    private float explosionDuration = 7f;
-    private float elapsed = 0f;
+    private float elapsed;
 
     public Bullet(float x, float y, Direction direction, SpriteBatch spriteBatch) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
@@ -41,7 +42,8 @@ public class Bullet extends DynamicGameObject {
 
         setTexture();
         currentFrame = new TextureRegion(texture, 8, 8);
-        setExplosionAnimation();
+
+        elapsed = 0;
     }
 
     public void update() {
@@ -51,12 +53,12 @@ public class Bullet extends DynamicGameObject {
                 break;
 
             case EXPLODING:
-                explode(deltaTime);
+                explode();
                 elapsed++;
                 break;
         }
 
-        if (elapsed > explosionDuration) {
+        if (elapsed > EXPLOSION_DURATION) {
             currentState = State.DESTROYED;
         }
     }
@@ -137,14 +139,18 @@ public class Bullet extends DynamicGameObject {
                 spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
                 break;
             case EXPLODING:
+                currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
                 spriteBatch.draw(currentFrame, getBigBounds().x, getBigBounds().y);
                 break;
         }
     }
 
     @Override
-    public void explode(float deltaTime) {
-        currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
+    public void explode() {
+        if (explosionAnimation == null) {
+            setExplosionAnimation();
+            currentState = State.EXPLODING;
+        }
     }
 
     @Override
@@ -169,8 +175,8 @@ public class Bullet extends DynamicGameObject {
             move();
         }
 
-        currentState = State.EXPLODING;
         setBigBounds();
+        explode();
     }
 
     @Override

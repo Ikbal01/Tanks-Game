@@ -2,6 +2,7 @@ package com.mygdx.game.world;
 
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.sprites.*;
+import com.mygdx.game.treasures.Treasure;
 
 import static com.mygdx.game.world.World.MAP_HEIGHT;
 import static com.mygdx.game.world.World.MAP_WIDTH;
@@ -15,40 +16,33 @@ public class CollisionSystem {
     private Array<Steel> steels;
     private Array<Brick> bricks;
 
+    private Treasure treasure;
+
     public CollisionSystem(World world) {
         this.world = world;
 
         hero = world.getHero();
         enemies = world.getEnemies();
 
-        steels = world.getSteels();
+        steels = world.getSteelBlocks();
         bricks = world.getBricks();
+
+        treasure = world.getTreasure();
     }
 
     public void update() {
-        for (int i = 0; i < enemies.size; i++) {
-            Enemy enemy = enemies.get(i);
+        verifyHero();
+        verifyEnemies();
 
-            verifyTankCollision(enemy);
-            verifyBrickCollision(enemy);
-            verifyMapBoundsCollision(enemy);
-            verifySteelCollision(enemy);
+        treasure = world.getTreasure();
+    }
 
-
-
-            if (enemy.getBullet() != null && enemy.getBullet().getState() == Bullet.State.FLYING) {
-
-                verifyBrickCollision(enemy.getBullet());
-                verifySteelCollision(enemy.getBullet());
-                verifyMapBoundsCollision(enemy.getBullet());
-                verifyBulletCollision(enemy.getBullet());
-            }
-        }
-
+    private void verifyHero() {
         verifyTankCollision(hero);
         verifyBrickCollision(hero);
         verifySteelCollision(hero);
         verifyMapBoundsCollision(hero);
+        verifyTreasureCollision(hero);
 
         if (hero.getBullet() != null && hero.getBullet().getState() == Bullet.State.FLYING) {
             verifyBrickCollision(hero.getBullet());
@@ -62,12 +56,36 @@ public class CollisionSystem {
         }
     }
 
-    private void verifyBrickCollision(Tank tank) {
-        for (Brick brick : bricks) {
-            if (tank.getBounds().overlaps(brick.getBounds())) {
-                tank.respondBrickCollision();
-                break;
+    private void verifyEnemies() {
+        for (int i = 0; i < enemies.size; i++) {
+            Enemy enemy = enemies.get(i);
+
+            if (enemy.getState() != Tank.State.EXPLODING) {
+                verifyTankCollision(enemy);
+                verifyBrickCollision(enemy);
+                verifyMapBoundsCollision(enemy);
+                verifySteelCollision(enemy);
             }
+
+            if (enemy.getBullet() != null && enemy.getBullet().getState() == Bullet.State.FLYING) {
+
+                verifyBrickCollision(enemy.getBullet());
+                verifySteelCollision(enemy.getBullet());
+                verifyMapBoundsCollision(enemy.getBullet());
+                verifyBulletCollision(enemy.getBullet());
+            }
+        }
+    }
+
+    private void verifyMapBoundsCollision(DynamicGameObject dynamicGameObject) {
+        int x = (int)dynamicGameObject.getPosition().x;
+        int y = (int)dynamicGameObject.getPosition().y;
+
+        int objectWidth = (int)dynamicGameObject.getBounds().getWidth();
+
+        if (x < 16 || y < 16 || x > (MAP_WIDTH + 16) - objectWidth
+                || y > (MAP_HEIGHT + 16) - objectWidth) {
+            dynamicGameObject.respondMapBoundsCollision();
         }
     }
 
@@ -76,6 +94,20 @@ public class CollisionSystem {
             if (dynamicGameObject.getBounds().overlaps(steel.getBounds())) {
                 dynamicGameObject.respondSteelCollision();
                 break;
+            }
+        }
+    }
+
+    private void verifyBrickCollision(Tank tank) {
+        for (Brick brick : bricks) {
+            if (tank.getBounds().overlaps(brick.getBounds())) {
+
+                if (tank.getState() != Tank.State.WALL_BREAKING) {
+                    tank.respondBrickCollision();
+                    break;
+                } else {
+                    brick.destroy();
+                }
             }
         }
     }
@@ -97,14 +129,49 @@ public class CollisionSystem {
         }
     }
 
+    private void verifyTreasureCollision(Hero hero) {
+        if (treasure != null && hero.getBounds().overlaps(treasure.getBounds())) {
+            switch (treasure.getType()) {
+                case ENEMY_KILLER:
+                    world.killEnemies();
+                    break;
+
+                case TIME_STOPPER:
+                    world.stopTime();
+                    break;
+
+                case EXTRA_LIFE:
+                    hero.addExtraLife();
+                    break;
+
+                case WALL_BREAKER:
+                    hero.addWallBreakingMod();
+                    break;
+
+                case BASE_DEFENDER:
+                    world.defendBase();
+                    break;
+
+                case TANK_IMPROVER:
+                    hero.improve();
+                    break;
+
+                case SHIELD:
+                    hero.addShield();
+                    break;
+            }
+
+            treasure.respondTankCollision();
+        }
+    }
+
     private void verifyBrickCollision(Bullet bullet) {
         if (bulletCollidesWithBricks(bullet)) {
 
-            for (int i = 0; i < bricks.size; i++) {
-                if (bullet.getBigBounds().overlaps(bricks.get(i).getBounds())) {
-                    bricks.get(i).destroy();
-                    bricks.removeIndex(i);
-                    i--;
+            for (Brick brick : bricks) {
+
+                if (bullet.getBigBounds().overlaps(brick.getBounds())) {
+                    brick.destroy();
                 }
             }
             bullet.respondBrickCollision();
@@ -123,10 +190,10 @@ public class CollisionSystem {
     }
 
     private void verifyEnemyCollision(Bullet bullet) {
-        for (int i = 0; i < enemies.size; i++) {
-            if (bullet.getBounds().overlaps(enemies.get(i).getBounds())) {
+        for (Enemy enemy : enemies) {
+            if (bullet.getBounds().overlaps(enemy.getBounds())) {
                 bullet.respondTankCollision();
-                enemies.removeIndex(i);
+                enemy.respondBulletCollision();
                 break;
             }
         }
@@ -150,15 +217,4 @@ public class CollisionSystem {
         }
     }
 
-    private void verifyMapBoundsCollision(DynamicGameObject dynamicGameObject) {
-        int x = (int)dynamicGameObject.getPosition().x;
-        int y = (int)dynamicGameObject.getPosition().y;
-
-        int objectWidth = (int)dynamicGameObject.getBounds().getWidth();
-
-        if (x < 16 || y < 16 || x > (MAP_WIDTH + 16) - objectWidth
-                || y > (MAP_HEIGHT + 16) - objectWidth) {
-            dynamicGameObject.respondMapBoundsCollision();
-        }
-    }
 }

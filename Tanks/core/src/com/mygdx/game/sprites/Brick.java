@@ -8,8 +8,4 @@ public class Brick extends StaticGameObject{
     public Brick(MapObject cell, TiledMapTileLayer layer) {
         super(((RectangleMapObject)cell).getRectangle(), cell, layer);
     }
-
-    public void destroy() {
-        destroyLayer();
-    }
 }

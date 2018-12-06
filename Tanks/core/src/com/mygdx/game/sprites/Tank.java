@@ -15,6 +15,9 @@ public abstract class Tank extends DynamicGameObject {
     public static final int TANK_WIDTH = 32;
     public static final int TANK_HEIGHT = 32;
 
+    public enum State {SPAWNING, NORMAL, WALL_BREAKING, SHIELD, FROZEN, EXPLODING, DESTROYED}
+    private State state;
+
     protected SpriteBatch spriteBatch;
 
     protected Animation<TextureRegion> upMoveAnimation;
@@ -55,6 +58,8 @@ public abstract class Tank extends DynamicGameObject {
         currAnimation = upMoveAnimation;
 
         previousPosition = new Vector2(getPosition());
+
+        state = State.NORMAL;
     }
 
     private Animation<TextureRegion> getAnimation(Color color, TankCategory category, Direction direction) {
@@ -66,18 +71,6 @@ public abstract class Tank extends DynamicGameObject {
         moveFrames[1] = new TextureRegion(World.items, x + TANK_WIDTH, y, TANK_WIDTH, TANK_HEIGHT);
 
         return new Animation<TextureRegion>(FRAME_DURATION, moveFrames);
-    }
-
-    @Override
-    public void draw(float deltaTime)  {
-        this.deltaTime = deltaTime;
-        TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
-        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
-
-        if (bullet != null) {
-            bullet.update();
-            bullet.draw(deltaTime);
-        }
     }
 
     public void fire() {
@@ -93,8 +86,8 @@ public abstract class Tank extends DynamicGameObject {
         currAnimation = upMoveAnimation;
         previousPosition.set(getPosition());
 
-        getPosition().y += velocity;
-        getBounds().y += velocity;
+        position.y += velocity;
+        bounds.y += velocity;
         muzzle.set(getPosition().x + 12, getPosition().y + TANK_HEIGHT);
         direction = Direction.UP;
     }
@@ -106,8 +99,8 @@ public abstract class Tank extends DynamicGameObject {
         currAnimation = downMoveAnimation;
         previousPosition.set(getPosition());
 
-        getPosition().y -= velocity;
-        getBounds().y -= velocity;
+        position.y -= velocity;
+        bounds.y -= velocity;
         muzzle.set(getPosition().x + 12, getPosition().y);
         direction = Direction.DOWN;
     }
@@ -119,8 +112,8 @@ public abstract class Tank extends DynamicGameObject {
         currAnimation = leftMoveAnimation;
         previousPosition.set(getPosition());
 
-        getPosition().x -= velocity;
-        getBounds().x -= velocity;
+        position.x -= velocity;
+        bounds.x -= velocity;
         muzzle.set(getPosition().x, getPosition().y + 12);
         direction = Direction.LEFT;
     }
@@ -131,8 +124,8 @@ public abstract class Tank extends DynamicGameObject {
         }
         currAnimation = rightMoveAnimation;
         previousPosition.set(getPosition());
-        getPosition().x += velocity;
-        getBounds().x += velocity;
+        position.x += velocity;
+        bounds.x += velocity;
         muzzle.set(getPosition().x + (TANK_WIDTH), getPosition().y + 12);
         direction = Direction.RIGHT;
     }
@@ -143,8 +136,8 @@ public abstract class Tank extends DynamicGameObject {
         if (remainder < (World.CELL_SIZE / 2)) {
             addition = 0;
         }
-        getBounds().y = ((int)(getBounds().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
-        getPosition().y = ((int)(getPosition().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        bounds.y = ((int)(getBounds().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        position.y = ((int)(getPosition().y / World.CELL_SIZE) * World.CELL_SIZE + addition);
     }
 
     protected void setVerticalRail() {
@@ -153,8 +146,20 @@ public abstract class Tank extends DynamicGameObject {
         if (remainder < (World.CELL_SIZE / 2)) {
             addition = 0;
         }
-        getBounds().x = ((int)(getBounds().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
-        getPosition().x = ((int)(getPosition().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        bounds.x = ((int)(getBounds().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
+        position.x = ((int)(getPosition().x / World.CELL_SIZE) * World.CELL_SIZE + addition);
+    }
+
+    @Override
+    public void draw(float deltaTime)  {
+        this.deltaTime = deltaTime;
+        TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
+        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
+
+        if (bullet != null) {
+            bullet.update();
+            bullet.draw(deltaTime);
+        }
     }
 
     @Override
@@ -171,9 +176,12 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     @Override
-    protected void explode(float deltaTime) {
-        TextureRegion currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
-        spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
+    protected void explode() {
+        if (explosionAnimation == null) {
+            setExplosionAnimation();
+            currAnimation = explosionAnimation;
+            position.set(getPosition().x - 16, getPosition().y - 16);
+        }
     }
 
     public Bullet getBullet() {
@@ -188,4 +196,11 @@ public abstract class Tank extends DynamicGameObject {
         this.category = category;
     }
 
+    public Tank.State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
 }

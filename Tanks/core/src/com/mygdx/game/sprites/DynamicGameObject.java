@@ -14,6 +14,8 @@ public abstract class DynamicGameObject extends GameObject {
         velocity  = 1.0f;
     }
 
+    public abstract void update();
+
     public abstract void draw(float deltaTime);
 
     public abstract void respondBrickCollision();
@@ -26,7 +28,7 @@ public abstract class DynamicGameObject extends GameObject {
 
     public abstract void respondBulletCollision();
 
-    protected abstract void explode(float deltaTime);
+    protected abstract void explode();
 
     protected abstract void setExplosionAnimation();
 }

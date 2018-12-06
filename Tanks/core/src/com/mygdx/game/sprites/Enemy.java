@@ -6,50 +6,58 @@ import com.mygdx.game.enums.Direction;
 import java.util.Random;
 
 public class Enemy extends Tank {
-    private static float DIRECTION_CHANGE_TIME = 180f;
-    private static float FIRE_TIME_DURATION = 60f;
-
-    public enum State {SPAWNING, NORMAL, EXPLODING};
-    public State currentState;
+    private static final float DIRECTION_CHANGE_TIME = 3f;
+    private static final float FIRE_TIME_DURATION = 1f;
+    private static final float EXPLOSION_DURATION = 0.2f;
+    private static final float FROZEN_TIME = 15f;
 
     private Random random;
-    private float elapsedTime = 0;
-    private float fireTime = 0;
+    private long startDirectionTime;
+    private long startFireTime;
+    private long startExplodingTime;
+    private long startFrozenTime;
 
     public Enemy(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, spriteBatch);
         random = new Random();
 
-        currentState = State.NORMAL;
+        startDirectionTime = System.currentTimeMillis();
+        startFireTime = System.currentTimeMillis();
     }
 
+    @Override
     public void update() {
-        elapsedTime++;
-        if (DIRECTION_CHANGE_TIME < elapsedTime) {
-            moveRandomCorridor();
-            elapsedTime = 0;
-        }
-
 
         if (bullet != null && bullet.getState() == Bullet.State.DESTROYED) {
             bullet = null;
         }
 
-        move();
-
-        fireTime++;
-        if (FIRE_TIME_DURATION < fireTime) {
-            fire();
-            fireTime = 0;
-        }
-
-        switch (currentState) {
-            case NORMAL:
-
-                break;
+        switch (getState()) {
             case SPAWNING:
+
+            case NORMAL:
+                move();
+                if (DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - startDirectionTime) / 1000.0)) {
+                    moveRandomCorridor();
+                    startDirectionTime = System.currentTimeMillis();
+                }
+                if (FIRE_TIME_DURATION < ((System.currentTimeMillis() - startFireTime) / 1000.0)) {
+                    fire();
+                    startFireTime = System.currentTimeMillis();
+                }
                 break;
+
+            case FROZEN:
+                if (FROZEN_TIME < (System.currentTimeMillis() - startFrozenTime) / 1000.0) {
+                    setState(State.NORMAL);
+                }
+                break;
+
             case EXPLODING:
+                if (EXPLOSION_DURATION < (System.currentTimeMillis() - startExplodingTime) / 1000.0) {
+                    setState(State.DESTROYED);
+                }
+                explode();
                 break;
         }
     }
@@ -118,12 +126,21 @@ public class Enemy extends Tank {
         }
     }
 
+    public void stop() {
+        startFrozenTime = System.currentTimeMillis();
+        setState(State.FROZEN);
+    }
+
+    public void destroy() {
+        startExplodingTime = System.currentTimeMillis();
+        setState(State.EXPLODING);
+    }
+
     @Override
     public void respondBrickCollision() {
-        getPosition().x = previousPosition.x;
-        getPosition().y = previousPosition.y;
-        getBounds().x = previousPosition.x;
-        getBounds().y = previousPosition.y;
+        position.set(previousPosition.x, previousPosition.y);
+        bounds.setX(previousPosition.x);
+        bounds.setY(previousPosition.y);
 
         changeDirection();
 
@@ -148,13 +165,12 @@ public class Enemy extends Tank {
 
     @Override
     public void respondBulletCollision() {
-        currentState = State.EXPLODING;
-        explode(deltaTime);
+        destroy();
     }
 
     @Override
     public void draw(float deltaTime)  {
-        update();
         super.draw(deltaTime);
     }
+
 }

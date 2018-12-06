@@ -5,10 +5,16 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Hero extends Tank{
+
+    private int lives;
+
     public Hero(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, spriteBatch);
+
+        lives = 3;
     }
 
+    @Override
     public void update() {
         handleInput();
 
@@ -16,7 +22,6 @@ public class Hero extends Tank{
             bullet = null;
         }
     }
-
 
     public void handleInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
@@ -37,18 +42,32 @@ public class Hero extends Tank{
         }
     }
 
+    public void addExtraLife() {
+        lives++;
+    }
+
+    public void addShield() {
+        setState(State.SHIELD);
+    }
+
+    public void improve() {
+        //...
+    }
+
+    public void addWallBreakingMod() {
+        setState(State.WALL_BREAKING);
+    }
+
     @Override
     public void draw(float deltaTime)  {
-        update();
         super.draw(deltaTime);
     }
 
     @Override
     public void respondBrickCollision() {
-        getPosition().x = previousPosition.x;
-        getPosition().y = previousPosition.y;
-        getBounds().x = previousPosition.x;
-        getBounds().y = previousPosition.y;
+        position.set(previousPosition.x, previousPosition.y);
+        bounds.setX(previousPosition.x);
+        bounds.setY(previousPosition.y);
     }
 
     @Override
@@ -68,6 +87,8 @@ public class Hero extends Tank{
 
     @Override
     public void respondBulletCollision() {
-
+        if (getState() != State.SHIELD) {
+            //...
+        }
     }
 }
