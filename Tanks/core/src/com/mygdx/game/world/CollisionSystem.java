@@ -9,49 +9,68 @@ import static com.mygdx.game.world.World.MAP_WIDTH;
 
 public class CollisionSystem {
     private World world;
+    private boolean multiPlayer;
 
-    private Hero hero;
+    private Hero player1;
+    private Hero player2;
     private Array<Enemy> enemies;
 
-    private Array<Steel> steels;
+    private Array<Steel> steelBlocks;
     private Array<Brick> bricks;
+    private Fortress fortress;
 
     private Treasure treasure;
 
     public CollisionSystem(World world) {
         this.world = world;
+        multiPlayer = world.isMultiplayer();
 
-        hero = world.getHero();
+        player1 = world.getPlayer1();
+
+        if (multiPlayer) {
+            player2 = world.getPlayer2();
+        }
+
         enemies = world.getEnemies();
 
-        steels = world.getSteelBlocks();
+        steelBlocks = world.getSteelBlocks();
         bricks = world.getBricks();
+        fortress = world.getFortress();
 
         treasure = world.getTreasure();
     }
 
     public void update() {
-        verifyHero();
+        if (player1.getState() != Tank.State.DESTROYED) {
+            verifyHero(player1);
+        }
+        if (multiPlayer && player2.getState() != Tank.State.DESTROYED) {
+            verifyHero(player2);
+        }
         verifyEnemies();
 
         treasure = world.getTreasure();
     }
 
-    private void verifyHero() {
-        verifyTankCollision(hero);
+    private void verifyHero(Hero hero) {
+        verifyCollision(hero);
         verifyBrickCollision(hero);
         verifySteelCollision(hero);
         verifyMapBoundsCollision(hero);
         verifyTreasureCollision(hero);
+        verifyFortressCollision(hero);
 
         if (hero.getBullet() != null && hero.getBullet().getState() == Bullet.State.FLYING) {
-            verifyBrickCollision(hero.getBullet());
-            verifySteelCollision(hero.getBullet());
-            verifyMapBoundsCollision(hero.getBullet());
-            verifyBulletCollision(hero.getBullet());
+            Bullet bullet = hero.getBullet();
+            verifyBrickCollision(bullet);
+            verifySteelCollision(bullet);
+            verifyMapBoundsCollision(bullet);
+            verifyBulletCollision(bullet);
+            verifyFortressCollision(bullet);
+            verifyTeammateBulletCollision(bullet);
 
-            if (hero.getBullet().getState() != Bullet.State.EXPLODING) {
-                verifyEnemyCollision(hero.getBullet());
+            if (bullet.getState() != Bullet.State.EXPLODING) {
+                verifyEnemyCollision(bullet);
             }
         }
     }
@@ -61,18 +80,22 @@ public class CollisionSystem {
             Enemy enemy = enemies.get(i);
 
             if (enemy.getState() != Tank.State.EXPLODING) {
-                verifyTankCollision(enemy);
+                verifyCollision(enemy);
                 verifyBrickCollision(enemy);
                 verifyMapBoundsCollision(enemy);
                 verifySteelCollision(enemy);
+                verifyFortressCollision(enemy);
             }
 
             if (enemy.getBullet() != null && enemy.getBullet().getState() == Bullet.State.FLYING) {
+                Bullet bullet = enemy.getBullet();
 
-                verifyBrickCollision(enemy.getBullet());
-                verifySteelCollision(enemy.getBullet());
-                verifyMapBoundsCollision(enemy.getBullet());
-                verifyBulletCollision(enemy.getBullet());
+                verifyBrickCollision(bullet);
+                verifySteelCollision(bullet);
+                verifyMapBoundsCollision(bullet);
+                verifyBulletCollision(bullet);
+                verifyFortressCollision(bullet);
+                verifyHeroCollision(bullet);
             }
         }
     }
@@ -90,7 +113,7 @@ public class CollisionSystem {
     }
 
     private void verifySteelCollision(DynamicGameObject dynamicGameObject) {
-        for (Steel steel : steels) {
+        for (Steel steel : steelBlocks) {
             if (dynamicGameObject.getBounds().overlaps(steel.getBounds())) {
                 dynamicGameObject.respondSteelCollision();
                 break;
@@ -112,20 +135,18 @@ public class CollisionSystem {
         }
     }
 
-    private void verifyTankCollision(Tank tank) {
+    private void verifyCollision(Tank tank) {
         for (Enemy enemy : enemies) {
-            if (tank != enemy) {
-                if (tank.getBounds().overlaps(enemy.getBounds())) {
-                    tank.respondTankCollision();
-                    break;
-                }
-            }
+            verifyCollision(tank, enemy);
         }
 
-        if (tank != hero) {
-            if (tank.getBounds().overlaps(hero.getBounds())) {
-                tank.respondTankCollision();
-            }
+        verifyCollision(tank, player1);
+        verifyCollision(tank, player2);
+    }
+
+    private void verifyCollision(Tank tankOne, Tank tankTwo) {
+        if (tankOne != tankTwo && tankOne.getBounds().overlaps(tankTwo.getBounds())) {
+            tankOne.respondTankCollision();
         }
     }
 
@@ -189,32 +210,66 @@ public class CollisionSystem {
         return false;
     }
 
+    private void verifyHeroCollision(Bullet bullet) {
+        verifyCollision(player2, bullet);
+        verifyCollision(player1, bullet);
+    }
+
     private void verifyEnemyCollision(Bullet bullet) {
         for (Enemy enemy : enemies) {
-            if (bullet.getBounds().overlaps(enemy.getBounds())) {
+            verifyCollision(enemy, bullet);
+        }
+    }
+
+    private void verifyCollision(Tank tank, Bullet bullet) {
+        if (bullet.getBounds().overlaps(tank.getBounds())) {
+            bullet.respondTankCollision();
+            tank.respondBulletCollision();
+        }
+    }
+
+    private void verifyTeammateBulletCollision(Bullet bullet) {
+        if (player1.getBullet() != null && player1.getBullet() == bullet) {
+            if (bullet.getBounds().overlaps(player2.getBounds())) {
                 bullet.respondTankCollision();
-                enemy.respondBulletCollision();
-                break;
+                player2.respondTeammateBulletCollision();
+            }
+
+        } else if (player2.getBullet() != null && player2.getBullet() == bullet) {
+            if (bullet.getBounds().overlaps(player1.getBounds())) {
+                bullet.respondTankCollision();
+                player1.respondTeammateBulletCollision();
             }
         }
     }
 
     private void verifyBulletCollision(Bullet bullet) {
         for (Enemy enemy : enemies) {
-            if (enemy.getBullet() != null && bullet != enemy.getBullet()) {
-                if (bullet.getBounds().overlaps(enemy.getBullet().getBounds())) {
-                    bullet.respondBulletCollision();
-                    enemy.getBullet().respondBulletCollision();
-                }
-            }
+            verifyBulletCollision(enemy, bullet);
         }
 
-        if (hero.getBullet() != null && bullet != hero.getBullet()) {
-            if (bullet.getBounds().overlaps(hero.getBullet().getBounds())) {
-                bullet.respondBulletCollision();
-                hero.getBullet().respondBulletCollision();
-            }
+        verifyBulletCollision(player1, bullet);
+        verifyBulletCollision(player2, bullet);
+    }
+
+    private void verifyBulletCollision(Tank tank, Bullet bullet) {
+        if (tank.getBullet() != null && bullet != tank.getBullet()
+                && bullet.getBounds().overlaps(tank.getBullet().getBounds())) {
+
+            bullet.respondBulletCollision();
+            tank.getBullet().respondBulletCollision();
         }
     }
 
+    private void verifyFortressCollision(Tank tank) {
+        if (tank.getBounds().overlaps(fortress.getBounds())) {
+            tank.respondTankCollision();
+        }
+    }
+
+    private void verifyFortressCollision(Bullet bullet) {
+        if (bullet.getBounds().overlaps(fortress.getBounds())) {
+            world.setState(World.State.GAME_OVER);
+        }
+    }
 }

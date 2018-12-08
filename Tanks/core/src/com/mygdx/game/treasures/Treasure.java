@@ -11,8 +11,9 @@ public abstract class Treasure extends GameObject {
     public enum TreasureType {BASE_DEFENDER, ENEMY_KILLER,
         EXTRA_LIFE, SHIELD, TANK_IMPROVER, TIME_STOPPER, WALL_BREAKER}
 
-    private Texture texture;
     public enum State {ACTIVE, EXPIRED, USED}
+
+    private Texture texture;
     private State currentState;
     private SpriteBatch spriteBatch;
     private long startTime;

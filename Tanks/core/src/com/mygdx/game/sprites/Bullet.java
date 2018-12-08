@@ -199,6 +199,11 @@ public class Bullet extends DynamicGameObject {
         currentState = State.DESTROYED;
     }
 
+    @Override
+    public void respondFortressCollison() {
+        respondBrickCollision();
+    }
+
     public Rectangle getBigBounds() {
         setBigBounds();
         return bigBounds;

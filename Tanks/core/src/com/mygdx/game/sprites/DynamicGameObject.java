@@ -28,6 +28,8 @@ public abstract class DynamicGameObject extends GameObject {
 
     public abstract void respondBulletCollision();
 
+    public abstract void respondFortressCollison();
+
     protected abstract void explode();
 
     protected abstract void setExplosionAnimation();

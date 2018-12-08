@@ -27,10 +27,7 @@ public class Enemy extends Tank {
 
     @Override
     public void update() {
-
-        if (bullet != null && bullet.getState() == Bullet.State.DESTROYED) {
-            bullet = null;
-        }
+        super.update();
 
         switch (getState()) {
             case SPAWNING:
@@ -166,6 +163,11 @@ public class Enemy extends Tank {
     @Override
     public void respondBulletCollision() {
         destroy();
+    }
+
+    @Override
+    public void respondFortressCollison() {
+        fire();
     }
 
     @Override

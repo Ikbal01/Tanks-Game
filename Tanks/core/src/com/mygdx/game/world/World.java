@@ -27,7 +27,24 @@ public class World {
 
     public static final int PIXELS_32 = 32;
 
+    private static final int PLAYER_1_SPAWNING_POS_X = 160;
+    private static final int PLAYER_1_SPAWNING_POS_Y = 16;
+    private static final int PLAYER_2_SPAWNING_POS_X = 256;
+    private static final int PLAYER_2_SPAWNING_POS_Y = 16;
+
+    private static final int Enemies_SPAWNING_POS_1_X = 16;
+    private static final int Enemies_SPAWNING_POS_2_X = 208;
+    private static final int Enemies_SPAWNING_POS_3_X = 400;
+    private static final int Enemies_SPAWNING_POS_Y = 400;
+
+    private static final int FORTRESS_POS_X = 208;
+    private static final int FORTRESS_POS_Y = 16;
+
     private static final int NEW_TREASURE_TIME = 17;
+    private static final int NEW_ENEMIES_GENERATE_TIME = 30;
+
+    public enum State {PLAYING, GAME_OVER, NEXT_lEVEL}
+    private State state;
 
     private SpriteBatch spriteBatch;
     public static Texture items;
@@ -35,41 +52,60 @@ public class World {
     private TmxMapLoader mapLoader;
     private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
+    private TiledMapTileLayer layer;
 
-    private Hero hero;
+    private Hero player1;
+    private Hero player2;
     private Array<Enemy> enemies;
 
     private Array<Steel> steelBlocks;
     private Array<Brick> bricks;
+    private Fortress fortress;
 
     private Treasure treasure;
 
     private CollisionSystem collisionSystem;
+    private PlayersController playersController;
 
     private long treasureTimer;
+    private long newEnemiesTimer;
 
-    public World(SpriteBatch spriteBatch) {
+    private boolean multiplayer;
+    private int stage;
+
+    public World(boolean multiplayer, int stage, SpriteBatch spriteBatch) {
         this.spriteBatch = spriteBatch;
+        this.multiplayer = multiplayer;
+        this.stage = stage;
+
+        state = State.PLAYING;
+
         items = new Texture(Gdx.files.internal("BattleTanksSheetTransparent.png"));
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("stage1.tmx");
+        map = mapLoader.load("stage" + stage + ".tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
+        layer = (TiledMapTileLayer) map.getLayers().get(1);
 
-        hero = new Hero(16, 16, spriteBatch);
+        player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y, spriteBatch);
+
+        if (multiplayer) {
+            player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y, spriteBatch);
+        }
+
         enemies = new Array<Enemy>();
 
-        enemies.add(new Enemy(16, 400, spriteBatch));
-        enemies.add(new Enemy(64, 400, spriteBatch));
-        enemies.add(new Enemy(400, 400, spriteBatch));
-        enemies.add(new Enemy(256, 400, spriteBatch));
+        generateEnemies();
 
         initializeBricks();
         initializeSteels();
+        fortress = new Fortress(FORTRESS_POS_X, FORTRESS_POS_Y);
 
         collisionSystem = new CollisionSystem(this);
+        playersController = new PlayersController(player1, player2, multiplayer);
 
         treasureTimer = System.currentTimeMillis();
+        newEnemiesTimer = System.currentTimeMillis();
     }
 
     public void update() {
@@ -77,12 +113,21 @@ public class World {
         removeDestroyedBricks();
         removeDestroyedSteelBlocks();
 
-        hero.update();
+        if (player1.getState() != Tank.State.DESTROYED) {
+            player1.update();
+        }
+        if (player2 != null && player2.getState() != Tank.State.DESTROYED) {
+            player2.update();
+        }
 
         for (Enemy enemy : enemies) {
             enemy.update();
         }
+
+        generateEnemies();
         updateTreasure();
+
+        playersController.update();
         collisionSystem.update();
     }
 
@@ -137,7 +182,6 @@ public class World {
 
     private void initializeBricks() {
         bricks = new Array<Brick>();
-        TiledMapTileLayer layer = (TiledMapTileLayer) map.getLayers().get(1);
 
         for (MapObject cell : map.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
             bricks.add(new Brick(cell, layer));
@@ -146,10 +190,19 @@ public class World {
 
     private void initializeSteels() {
         steelBlocks = new Array<Steel>();
-        TiledMapTileLayer layer = (TiledMapTileLayer) map.getLayers().get(1);
 
         for (MapObject cell : map.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
             steelBlocks.add(new Steel(cell, layer));
+        }
+    }
+
+    private void generateEnemies() {
+        if (NEW_ENEMIES_GENERATE_TIME < ((System.currentTimeMillis() - newEnemiesTimer) / 1000.0)) {
+            enemies.add(new Enemy(Enemies_SPAWNING_POS_1_X, Enemies_SPAWNING_POS_Y, spriteBatch));
+            enemies.add(new Enemy(Enemies_SPAWNING_POS_2_X, Enemies_SPAWNING_POS_Y, spriteBatch));
+            enemies.add(new Enemy(Enemies_SPAWNING_POS_3_X, Enemies_SPAWNING_POS_Y, spriteBatch));
+
+            newEnemiesTimer = System.currentTimeMillis();
         }
     }
 
@@ -186,7 +239,8 @@ public class World {
     }
 
     public void draw(float stateTime) {
-        hero.draw(stateTime);
+        player1.draw(stateTime);
+        player2.draw(stateTime);
         for (Enemy enemy : enemies) {
             enemy.draw(stateTime);
         }
@@ -215,8 +269,16 @@ public class World {
         return renderer;
     }
 
-    public Hero getHero() {
-        return hero;
+    public Hero getPlayer1() {
+        return player1;
+    }
+
+    public Hero getPlayer2() {
+        return player2;
+    }
+
+    public void setState(State state) {
+        this.state = state;
     }
 
     public Array<Enemy> getEnemies() {
@@ -233,5 +295,13 @@ public class World {
 
     public Treasure getTreasure() {
         return treasure;
+    }
+
+    public Fortress getFortress() {
+        return fortress;
+    }
+
+    public boolean isMultiplayer() {
+        return multiplayer;
     }
 }

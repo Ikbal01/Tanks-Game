@@ -31,7 +31,7 @@ public class BattleScreen implements Screen {
         horizontalCellCount = 26;
         verticalCellCount = 26;
 
-        world = new World(game.batch);
+        world = new World(true, 1, game.batch);
     }
 
 

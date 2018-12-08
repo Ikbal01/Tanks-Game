@@ -151,6 +151,13 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     @Override
+    public void update() {
+        if (bullet != null && bullet.getState() == Bullet.State.DESTROYED) {
+            bullet = null;
+        }
+    }
+
+    @Override
     public void draw(float deltaTime)  {
         this.deltaTime = deltaTime;
         TextureRegion currentFrame = currAnimation.getKeyFrame(deltaTime, true);
