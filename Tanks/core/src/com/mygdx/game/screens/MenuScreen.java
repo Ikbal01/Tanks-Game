@@ -17,7 +17,7 @@ public class MenuScreen extends ScreenAdapter {
     private int index;
 
     private boolean selected;
-    private int multiplayer;
+    private boolean multiplayer;
 
     public MenuScreen(Tanks game) {
         this.game = game;
@@ -30,7 +30,7 @@ public class MenuScreen extends ScreenAdapter {
         index = 0;
 
         selected = false;
-        multiplayer = 0;
+        multiplayer = false;
     }
 
     public void update() {
@@ -41,39 +41,27 @@ public class MenuScreen extends ScreenAdapter {
 
     private void handleInput() {
         if (!selected) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                if (index < 1) {
-                    index++;
-                }
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                if (index > 0) {
-                    index--;
-                }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 1) {
+                index++;
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 0) {
+                index--;
             }
         } else {
-            switch (multiplayer) {
-                case 0 :
-                    if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                        if (index < 4) {
-                            index++;
-                        }
-                    } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                        if (index > 2) {
-                            index--;
-                        }
-                    }
-                    break;
-                case 1 :
-                    if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                        if (index < 7) {
-                            index++;
-                        }
-                    } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                        if (index > 5) {
-                            index--;
-                        }
-                    }
-                    break;
+            if (!multiplayer) {
+
+                if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 4) {
+                    index++;
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 2) {
+                    index--;
+                }
+            } else {
+
+                if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 7) {
+                    index++;
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 5) {
+                    index--;
+                }
             }
         }
 
@@ -84,10 +72,10 @@ public class MenuScreen extends ScreenAdapter {
                     index = 2;
                 } else {
                     index = 5;
-                    multiplayer = 1;
+                    multiplayer = true;
                 }
             } else {
-                game.setScreen(new BattleScreen(game));
+                setScreen();
             }
         }
     }
