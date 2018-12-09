@@ -31,7 +31,7 @@ public class BattleScreen implements Screen {
         horizontalCellCount = 26;
         verticalCellCount = 26;
 
-        world = new World(true, 1, game.batch);
+        world = new World(game.spriteBatch, true, 1);
     }
 
 
@@ -54,13 +54,13 @@ public class BattleScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         world.getRenderer().render();
-        game.batch.setProjectionMatrix(camera.combined);
+        game.spriteBatch.setProjectionMatrix(camera.combined);
 
         stateTime += Gdx.graphics.getDeltaTime();
 
-        game.batch.begin();
+        game.spriteBatch.begin();
         world.draw(stateTime);
-        game.batch.end();
+        game.spriteBatch.end();
     }
 
     @Override

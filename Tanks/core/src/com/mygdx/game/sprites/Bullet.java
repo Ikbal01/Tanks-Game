@@ -90,19 +90,19 @@ public class Bullet extends DynamicGameObject {
     private void setTexture() {
         switch (direction) {
             case UP:
-                texture = new Texture(Gdx.files.internal("bullet_up.png"));
+                texture = new Texture(Gdx.files.internal("bullet\\bullet_up.png"));
                 break;
 
             case DOWN:
-                texture = new Texture(Gdx.files.internal("bullet_down.png"));
+                texture = new Texture(Gdx.files.internal("bullet\\bullet_down.png"));
                 break;
 
             case LEFT:
-                texture = new Texture(Gdx.files.internal("bullet_left.png"));
+                texture = new Texture(Gdx.files.internal("bullet\\bullet_left.png"));
                 break;
 
             case RIGHT:
-                texture = new Texture(Gdx.files.internal("bullet_right.png"));
+                texture = new Texture(Gdx.files.internal("bullet\\bullet_right.png"));
                 break;
         }
     }

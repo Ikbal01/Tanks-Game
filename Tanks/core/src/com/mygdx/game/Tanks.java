@@ -2,15 +2,18 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.mygdx.game.screens.BattleScreen;
+import com.mygdx.game.screens.MenuScreen;
 
 public class Tanks extends Game {
-	public SpriteBatch batch;
+	public static final int DESKTOP_SCREEN_WIDTH = 880;
+	public static final int DESKTOP_SCREEN_HEIGHT = 768;
+
+	public SpriteBatch spriteBatch;
 
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
-		setScreen(new BattleScreen(this));
+		spriteBatch = new SpriteBatch();
+		setScreen(new MenuScreen(this));
 	}
 
 	@Override
@@ -20,6 +23,6 @@ public class Tanks extends Game {
 	
 	@Override
 	public void dispose () {
-		batch.dispose();
+		spriteBatch.dispose();
 	}
 }

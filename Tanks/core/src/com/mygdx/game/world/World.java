@@ -73,7 +73,7 @@ public class World {
     private boolean multiplayer;
     private int stage;
 
-    public World(boolean multiplayer, int stage, SpriteBatch spriteBatch) {
+    public World(SpriteBatch spriteBatch, boolean multiplayer, int stage) {
         this.spriteBatch = spriteBatch;
         this.multiplayer = multiplayer;
         this.stage = stage;
