@@ -5,11 +5,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class Hero extends Tank{
 
     private int lives;
+    private int stars;
 
-    public Hero(float x, float y, SpriteBatch spriteBatch) {
+    public Hero(float x, float y, SpriteBatch spriteBatch, int lives, int stars) {
         super(x, y, spriteBatch);
 
-        lives = 3;
+        this.lives = lives;
+        this.stars = stars;
     }
 
     public void addExtraLife() {
@@ -21,7 +23,7 @@ public class Hero extends Tank{
     }
 
     public void improve() {
-        //...
+        stars++;
     }
 
     public void addWallBreakingMod() {

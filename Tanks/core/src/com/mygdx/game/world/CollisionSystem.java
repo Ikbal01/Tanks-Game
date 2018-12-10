@@ -9,7 +9,7 @@ import static com.mygdx.game.world.World.MAP_WIDTH;
 
 public class CollisionSystem {
     private World world;
-    private boolean multiPlayer;
+    private boolean isMultiplayer;
 
     private Hero player1;
     private Hero player2;
@@ -18,16 +18,15 @@ public class CollisionSystem {
     private Array<Steel> steelBlocks;
     private Array<Brick> bricks;
     private Fortress fortress;
-
     private Treasure treasure;
+
 
     public CollisionSystem(World world) {
         this.world = world;
-        multiPlayer = world.isMultiplayer();
+        isMultiplayer = world.isMultiplayer();
 
         player1 = world.getPlayer1();
-
-        if (multiPlayer) {
+        if (isMultiplayer) {
             player2 = world.getPlayer2();
         }
 
@@ -44,7 +43,7 @@ public class CollisionSystem {
         if (player1.getState() != Tank.State.DESTROYED) {
             verifyHero(player1);
         }
-        if (multiPlayer && player2.getState() != Tank.State.DESTROYED) {
+        if (isMultiplayer && player2.getState() != Tank.State.DESTROYED) {
             verifyHero(player2);
         }
         verifyEnemies();
@@ -141,7 +140,9 @@ public class CollisionSystem {
         }
 
         verifyCollision(tank, player1);
-        verifyCollision(tank, player2);
+        if (isMultiplayer) {
+            verifyCollision(tank, player2);
+        }
     }
 
     private void verifyCollision(Tank tankOne, Tank tankTwo) {
@@ -211,8 +212,10 @@ public class CollisionSystem {
     }
 
     private void verifyHeroCollision(Bullet bullet) {
-        verifyCollision(player2, bullet);
         verifyCollision(player1, bullet);
+        if (isMultiplayer) {
+            verifyCollision(player2, bullet);
+        }
     }
 
     private void verifyEnemyCollision(Bullet bullet) {
@@ -230,7 +233,7 @@ public class CollisionSystem {
 
     private void verifyTeammateBulletCollision(Bullet bullet) {
         if (player1.getBullet() != null && player1.getBullet() == bullet) {
-            if (bullet.getBounds().overlaps(player2.getBounds())) {
+            if (isMultiplayer && bullet.getBounds().overlaps(player2.getBounds())) {
                 bullet.respondTankCollision();
                 player2.respondTeammateBulletCollision();
             }
@@ -249,7 +252,9 @@ public class CollisionSystem {
         }
 
         verifyBulletCollision(player1, bullet);
-        verifyBulletCollision(player2, bullet);
+        if (isMultiplayer) {
+            verifyBulletCollision(player2, bullet);
+        }
     }
 
     private void verifyBulletCollision(Tank tank, Bullet bullet) {

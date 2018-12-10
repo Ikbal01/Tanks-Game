@@ -4,12 +4,12 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.mygdx.game.sprites.Hero;
 
-public class PlayersController {
+public class GameController {
     private Hero player1;
     private Hero player2;
     private boolean multiplayer;
 
-    public PlayersController(Hero player1, Hero player2, boolean multiplayer) {
+    public GameController(Hero player1, Hero player2, boolean multiplayer) {
         this.player1 = player1;
         this.player2 = player2;
         this.multiplayer = multiplayer;
