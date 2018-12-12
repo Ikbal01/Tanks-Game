@@ -1,15 +1,16 @@
 package com.mygdx.game.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.Tanks;
+import com.mygdx.game.world.StageOption;
 import com.mygdx.game.world.World;
 
-public class BattleScreen implements Screen {
+public class BattleScreen extends ScreenAdapter {
     private Tanks game;
     private OrthographicCamera camera;
     private Viewport viewport;
@@ -21,8 +22,9 @@ public class BattleScreen implements Screen {
     public int horizontalCellCount;
     public int verticalCellCount;
 
-    public BattleScreen(Tanks game) {
-        this.game = game;
+    public BattleScreen(StageOption stageOption) {
+
+        this.game = stageOption.getGame();
         camera = new OrthographicCamera();
         viewport = new FitViewport(World.WORLD_WIDTH, World.WORLD_HEIGHT, camera);
 
@@ -31,7 +33,7 @@ public class BattleScreen implements Screen {
         horizontalCellCount = 26;
         verticalCellCount = 26;
 
-        world = new World(game.spriteBatch, true, 1);
+        world = new World(stageOption);
     }
 
 
@@ -42,18 +44,19 @@ public class BattleScreen implements Screen {
     }
 
     @Override
-    public void show() {
-
-    }
-
-    @Override
     public void render(float delta) {
         update();
 
         Gdx.gl.glClearColor(0.1f, 0.3f , 0.8f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        world.getRenderer().render();
+        int[] mainLayers = {0, 1, 2, 3};
+        world.getRenderer().render(mainLayers);
+
+        if (world.getState() == World.State.BASE_DEFENCE) {
+            int[] baseDefenceLayers = {4, 5};
+            world.getRenderer().render(baseDefenceLayers);
+        }
         game.spriteBatch.setProjectionMatrix(camera.combined);
 
         stateTime += Gdx.graphics.getDeltaTime();
@@ -66,25 +69,5 @@ public class BattleScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height);
-    }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void resume() {
-
-    }
-
-    @Override
-    public void hide() {
-
-    }
-
-    @Override
-    public void dispose() {
-
     }
 }

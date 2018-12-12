@@ -21,6 +21,7 @@ public class Bullet extends DynamicGameObject {
 
     private Animation<TextureRegion> explosionAnimation;
 
+    private Tank tank;
     private Direction direction;
     private Rectangle bigBounds;
 
@@ -31,12 +32,13 @@ public class Bullet extends DynamicGameObject {
 
     private float elapsed;
 
-    public Bullet(float x, float y, Direction direction, SpriteBatch spriteBatch) {
+    public Bullet(float x, float y, Tank tank, Direction direction, SpriteBatch spriteBatch, float velocity) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
+
         this.direction = direction;
         this.spriteBatch = spriteBatch;
-
-        velocity = 4.5f;
+        this.velocity = velocity;
+        this.tank = tank;
 
         currentState = State.FLYING;
 
@@ -53,7 +55,6 @@ public class Bullet extends DynamicGameObject {
                 break;
 
             case EXPLODING:
-                explode();
                 elapsed++;
                 break;
         }
@@ -171,6 +172,7 @@ public class Bullet extends DynamicGameObject {
 
     @Override
     public void respondBrickCollision() {
+        velocity = 4;
         for (int i = 0; i < 3; i++) {
             move();
         }
@@ -190,17 +192,19 @@ public class Bullet extends DynamicGameObject {
     }
 
     @Override
-    public void respondTankCollision() {
-        respondBrickCollision();
+    public void respondTankCollision(Tank tank) {
+        if (tank.state != Tank.State.SPAWNING) {
+            respondBrickCollision();
+        }
     }
 
     @Override
-    public void respondBulletCollision() {
+    public void respondBulletCollision(Bullet bullet) {
         currentState = State.DESTROYED;
     }
 
     @Override
-    public void respondFortressCollison() {
+    public void respondFortressCollision() {
         respondBrickCollision();
     }
 
@@ -211,5 +215,9 @@ public class Bullet extends DynamicGameObject {
 
     public State getState() {
         return currentState;
+    }
+
+    public Tank getTank() {
+        return tank;
     }
 }

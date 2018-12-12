@@ -1,25 +1,39 @@
 package com.mygdx.game.sprites;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.mygdx.game.enums.Color;
 import com.mygdx.game.enums.Direction;
+import com.mygdx.game.enums.TankCategory;
+import com.mygdx.game.world.World;
 
 import java.util.Random;
 
 public class Enemy extends Tank {
     private static final float DIRECTION_CHANGE_TIME = 3f;
     private static final float FIRE_TIME_DURATION = 1f;
-    private static final float EXPLOSION_DURATION = 0.2f;
     private static final float FROZEN_TIME = 15f;
 
     private Random random;
     private long startDirectionTime;
     private long startFireTime;
-    private long startExplodingTime;
     private long startFrozenTime;
 
-    public Enemy(float x, float y, SpriteBatch spriteBatch) {
-        super(x, y, spriteBatch);
+    public Enemy(float x, float y, World world) {
+        super(x, y, world);
+
+        state = State.SPAWNING;
+
         random = new Random();
+
+        color = Color.values()[random.nextInt(3)];
+
+        int randomCategoryIndex = random.nextInt((world.getDifficulty().getIndex()) + world.getStage()) % 8;
+        category = TankCategory.values()[randomCategoryIndex];
+
+        armour = category.getArmour();
+        bulletVelocity = category.getBulletVelocity();
+        velocity = category.getVelocity();
+        updateAnimation();
+        currAnimation = downMoveAnimation;
 
         startDirectionTime = System.currentTimeMillis();
         startFireTime = System.currentTimeMillis();
@@ -51,10 +65,7 @@ public class Enemy extends Tank {
                 break;
 
             case EXPLODING:
-                if (EXPLOSION_DURATION < (System.currentTimeMillis() - startExplodingTime) / 1000.0) {
-                    setState(State.DESTROYED);
-                }
-                explode();
+
                 break;
         }
     }
@@ -128,11 +139,6 @@ public class Enemy extends Tank {
         setState(State.FROZEN);
     }
 
-    public void destroy() {
-        startExplodingTime = System.currentTimeMillis();
-        setState(State.EXPLODING);
-    }
-
     @Override
     public void respondBrickCollision() {
         position.set(previousPosition.x, previousPosition.y);
@@ -156,17 +162,26 @@ public class Enemy extends Tank {
     }
 
     @Override
-    public void respondTankCollision() {
-        respondBrickCollision();
+    public void respondTankCollision(Tank tank) {
+        if (tank.state != State.SPAWNING && state != State.SPAWNING) {
+            respondBrickCollision();
+        }
     }
 
     @Override
-    public void respondBulletCollision() {
-        destroy();
+    public void respondBulletCollision(Bullet bullet) {
+        if (state == State.SPAWNING) {
+            return;
+        }
+
+        armour--;
+        if (armour == 0) {
+            explode();
+        }
     }
 
     @Override
-    public void respondFortressCollison() {
+    public void respondFortressCollision() {
         fire();
     }
 

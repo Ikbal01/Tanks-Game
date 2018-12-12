@@ -7,8 +7,20 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.mygdx.game.Tanks;
+import com.mygdx.game.world.StageOption;
 
 public class MenuScreen extends ScreenAdapter {
+    public enum Difficulty {EASY(1), NORMAL(2), HARD(3);
+        private int index;
+        private Difficulty(int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+    }
+
     private Tanks game;
     private OrthographicCamera camera;
 
@@ -17,7 +29,7 @@ public class MenuScreen extends ScreenAdapter {
     private int index;
 
     private boolean selected;
-    private int multiplayer;
+    private boolean multiplayer;
 
     public MenuScreen(Tanks game) {
         this.game = game;
@@ -30,7 +42,7 @@ public class MenuScreen extends ScreenAdapter {
         index = 0;
 
         selected = false;
-        multiplayer = 0;
+        multiplayer = false;
     }
 
     public void update() {
@@ -41,39 +53,27 @@ public class MenuScreen extends ScreenAdapter {
 
     private void handleInput() {
         if (!selected) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                if (index < 1) {
-                    index++;
-                }
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                if (index > 0) {
-                    index--;
-                }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 1) {
+                index++;
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 0) {
+                index--;
             }
         } else {
-            switch (multiplayer) {
-                case 0 :
-                    if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                        if (index < 4) {
-                            index++;
-                        }
-                    } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                        if (index > 2) {
-                            index--;
-                        }
-                    }
-                    break;
-                case 1 :
-                    if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN)) {
-                        if (index < 7) {
-                            index++;
-                        }
-                    } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP)) {
-                        if (index > 5) {
-                            index--;
-                        }
-                    }
-                    break;
+            if (!multiplayer) {
+
+                if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 4) {
+                    index++;
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 2) {
+                    index--;
+                }
+            } else {
+
+                if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 7) {
+                    index++;
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 5) {
+                    index--;
+                }
             }
         }
 
@@ -84,12 +84,38 @@ public class MenuScreen extends ScreenAdapter {
                     index = 2;
                 } else {
                     index = 5;
-                    multiplayer = 1;
+                    multiplayer = true;
                 }
             } else {
-                game.setScreen(new BattleScreen(game));
+                setScreen();
             }
         }
+    }
+
+    private void setScreen() {
+        StageOption stageOption = new StageOption();
+
+        stageOption.setDifficulty(difficulty());
+        stageOption.setLives(3, 3);
+        stageOption.setStars(0, 0);
+        stageOption.setGame(game);
+        stageOption.setMultiplayer(multiplayer);
+        stageOption.setStage(1);
+
+        game.setScreen(new StageScreen(stageOption));
+    }
+
+    private Difficulty difficulty() {
+        Difficulty difficulty;
+        if (index == 2 || index == 5) {
+            difficulty = Difficulty.EASY;
+        } else if (index == 3 || index == 6) {
+            difficulty = Difficulty.NORMAL;
+        } else {
+            difficulty = Difficulty.HARD;
+        }
+
+        return difficulty;
     }
 
     private void setCases() {

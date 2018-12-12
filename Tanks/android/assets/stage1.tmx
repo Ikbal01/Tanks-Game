@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="64" height="56" tilewidth="8" tileheight="8" infinite="0" nextlayerid="11" nextobjectid="1045">
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="64" height="56" tilewidth="8" tileheight="8" infinite="0" nextlayerid="13" nextobjectid="1046">
  <tileset firstgid="1" source="tankSheet.tsx"/>
  <tileset firstgid="401" source="tankSheet8.tsx"/>
  <layer id="1" name="Background" width="64" height="56">
@@ -877,5 +877,13 @@
   <object id="51" x="424" y="224" width="8" height="8"/>
   <object id="52" x="416" y="232" width="8" height="8"/>
   <object id="53" x="424" y="232" width="8" height="8"/>
+ </objectgroup>
+ <layer id="11" name="BaseDefender" width="64" height="56">
+  <data encoding="base64" compression="zlib">
+   eJzt0bEJwDAMRUGBJrV3TeayFxCkDNJd80GdeBEAAAAAAAAAAAAAAMB0KyN21tvdc398s97uqs7T+n+9d6P/7P782wHoCxLR
+  </data>
+ </layer>
+ <objectgroup id="12" name="defender">
+  <object id="1045" x="192" y="384" width="64" height="48"/>
  </objectgroup>
 </map>

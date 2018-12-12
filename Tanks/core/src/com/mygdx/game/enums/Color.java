@@ -1,10 +1,10 @@
 package com.mygdx.game.enums;
 
 public enum  Color {
-    YELLOW(0, 0),
-    GREEN(0, 8),
+    GRAY(8, 0),
     PURPLE(8, 8),
-    GRAY(8, 0);
+    GREEN(0, 8),
+    YELLOW(0, 0);
 
     private int x;
     private int y;
