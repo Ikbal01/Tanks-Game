@@ -150,9 +150,15 @@ public class CollisionSystem {
             verifyTankCollision(tank, enemy);
         }
 
+<<<<<<< HEAD
         verifyTankCollision(tank, player1);
         if (isMultiplayer) {
             verifyTankCollision(tank, player2);
+=======
+        verifyCollision(tank, player1);
+        if (isMultiplayer) {
+            verifyCollision(tank, player2);
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
         }
     }
 
@@ -226,9 +232,15 @@ public class CollisionSystem {
     }
 
     private void verifyHeroCollision(Bullet bullet) {
+<<<<<<< HEAD
         verifyTankCollision(player1, bullet);
         if (isMultiplayer) {
             verifyTankCollision(player2, bullet);
+=======
+        verifyCollision(player1, bullet);
+        if (isMultiplayer) {
+            verifyCollision(player2, bullet);
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
         }
     }
 
@@ -240,8 +252,28 @@ public class CollisionSystem {
 
     private void verifyTankCollision(Tank tank, Bullet bullet) {
         if (bullet.getBounds().overlaps(tank.getBounds())) {
+<<<<<<< HEAD
             bullet.respondTankCollision(tank);
             tank.respondBulletCollision(bullet);
+=======
+            bullet.respondTankCollision();
+            tank.respondBulletCollision();
+        }
+    }
+
+    private void verifyTeammateBulletCollision(Bullet bullet) {
+        if (player1.getBullet() != null && player1.getBullet() == bullet) {
+            if (isMultiplayer && bullet.getBounds().overlaps(player2.getBounds())) {
+                bullet.respondTankCollision();
+                player2.respondTeammateBulletCollision();
+            }
+
+        } else if (player2.getBullet() != null && player2.getBullet() == bullet) {
+            if (bullet.getBounds().overlaps(player1.getBounds())) {
+                bullet.respondTankCollision();
+                player1.respondTeammateBulletCollision();
+            }
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
         }
     }
 

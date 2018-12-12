@@ -13,6 +13,7 @@ public class Hero extends Tank{
 
     private int lives;
     private int stars;
+<<<<<<< HEAD
     private int kills;
 
     public Hero(float x, float y, World world, int lives, int stars, int kills) {
@@ -79,6 +80,14 @@ public class Hero extends Tank{
         } else {
             bullets.add(new Bullet(muzzle.x, muzzle.y, this, direction, spriteBatch, bulletVelocity));
         }
+=======
+
+    public Hero(float x, float y, SpriteBatch spriteBatch, int lives, int stars) {
+        super(x, y, spriteBatch);
+
+        this.lives = lives;
+        this.stars = stars;
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
     }
 
     public void addExtraLife() {
@@ -91,9 +100,12 @@ public class Hero extends Tank{
 
     public void improve() {
         stars++;
+<<<<<<< HEAD
 
         updateTankSpecif();
         updateAnimation();
+=======
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
     }
 
     public void setWallBreakingMod() {

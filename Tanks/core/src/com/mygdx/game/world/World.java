@@ -12,7 +12,10 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.Tanks;
 import com.mygdx.game.screens.GameOverScreen;
+<<<<<<< HEAD
 import com.mygdx.game.screens.MenuScreen;
+=======
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
 import com.mygdx.game.sprites.*;
 import com.mygdx.game.treasures.*;
 
@@ -47,7 +50,11 @@ public class World {
     private static final int NEW_TREASURE_TIME = 17;
     private static final int NEW_ENEMIES_GENERATE_TIME = 30;
 
+<<<<<<< HEAD
     public enum State {NORMAL, BASE_DEFENCE, GAME_OVER, NEXT_LEVEL}
+=======
+    public enum State {PLAYING, GAME_OVER, NEXT_LEVEL}
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
     private State state;
 
     public static Texture items;
@@ -61,8 +68,11 @@ public class World {
     private SpriteBatch spriteBatch;
     private StageOption stageOption;
     private boolean isMultiplayer;
+<<<<<<< HEAD
     private MenuScreen.Difficulty difficulty;
     private int stage;
+=======
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
 
     private Hero player1;
     private Hero player2;
@@ -87,8 +97,11 @@ public class World {
         this.game = stageOption.getGame();
         this.isMultiplayer = stageOption.isMultiplayer();
         this.spriteBatch = game.spriteBatch;
+<<<<<<< HEAD
         this.difficulty = stageOption.getDifficulty();
         this.stage = stageOption.getStage();
+=======
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
 
         state = State.NORMAL;
 
@@ -191,10 +204,17 @@ public class World {
     }
 
     private void initPlayers() {
+<<<<<<< HEAD
         player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y, this, 3, 3, 0);
 
         if (stageOption.isMultiplayer()) {
             player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y, this, 3, 3, 0);
+=======
+        player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y, spriteBatch);
+
+        if (stageOption.isMultiplayer()) {
+            player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y, spriteBatch);
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
         }
     }
 
@@ -257,10 +277,15 @@ public class World {
     }
 
     public void draw(float stateTime) {
+<<<<<<< HEAD
         if (player1.getState() != Tank.State.DESTROYED) {
             player1.draw(stateTime);
         }
         if (isMultiplayer && player2.getState() != Tank.State.DESTROYED) {
+=======
+        player1.draw(stateTime);
+        if (isMultiplayer) {
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
             player2.draw(stateTime);
         }
         for (Enemy enemy : enemies) {
@@ -344,6 +369,7 @@ public class World {
 
     public boolean isMultiplayer() {
         return isMultiplayer;
+<<<<<<< HEAD
     }
 
     public MenuScreen.Difficulty getDifficulty() {
@@ -356,5 +382,7 @@ public class World {
 
     public State getState() {
         return state;
+=======
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
     }
 }

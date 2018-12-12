@@ -10,6 +10,7 @@ import com.mygdx.game.Tanks;
 import com.mygdx.game.world.StageOption;
 
 public class MenuScreen extends ScreenAdapter {
+<<<<<<< HEAD
     public enum Difficulty {EASY(1), NORMAL(2), HARD(3);
         private int index;
         private Difficulty(int index) {
@@ -20,6 +21,9 @@ public class MenuScreen extends ScreenAdapter {
             return index;
         }
     }
+=======
+    public enum Difficulty {EASY, NORMAL, HARD}
+>>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
 
     private Tanks game;
     private OrthographicCamera camera;
