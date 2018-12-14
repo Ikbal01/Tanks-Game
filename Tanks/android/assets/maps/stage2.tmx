@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="64" height="56" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="1">
+ <tileset firstgid="1" source="../tankSheet8.tsx"/>
+ <layer id="1" name="Background" width="64" height="56">
+  <data encoding="base64" compression="zlib">
+   eJztz7ENADAIwDDaazifE/tEJSTwkD3OE5FaX91Z8fPz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/P3//Lz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8//za2cPFVvleg==
+  </data>
+ </layer>
+ <layer id="2" name="Visualization" width="64" height="56">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20ND6AAAAAAAAAAAAAAAAAAgDcDOAAAAQ==
+  </data>
+ </layer>
+ <objectgroup id="3" name="Bricks"/>
+ <objectgroup id="4" name="Steel"/>
+ <objectgroup id="5" name="Water"/>
+ <layer id="6" name="BaseDefender" width="64" height="56">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20ND6AAAAAAAAAAAAAAAAAAgDcDOAAAAQ==
+  </data>
+ </layer>
+</map>

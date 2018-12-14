@@ -12,7 +12,7 @@ public class Bullet extends DynamicGameObject {
     private static final int BULLET_WIDTH = 8;
     private static final int BULLET_HEIGHT = 8;
 
-    private static final float EXPLOSION_DURATION = 7f;
+    private static final float EXPLOSION_DURATION = 0.15f;
 
     private SpriteBatch spriteBatch;
 
@@ -25,12 +25,12 @@ public class Bullet extends DynamicGameObject {
     private Direction direction;
     private Rectangle bigBounds;
 
-    public enum State {FLYING, EXPLODING, DESTROYED};
-    private State currentState;
+    public enum State {FLYING, EXPLODING, DESTROYED}
+    private State state;
 
     private float deltaTime;
 
-    private float elapsed;
+    private long elapsed;
 
     public Bullet(float x, float y, Tank tank, Direction direction, SpriteBatch spriteBatch, float velocity) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
@@ -40,27 +40,48 @@ public class Bullet extends DynamicGameObject {
         this.velocity = velocity;
         this.tank = tank;
 
-        currentState = State.FLYING;
+        state = State.FLYING;
 
         setTexture();
         currentFrame = new TextureRegion(texture, 8, 8);
-
-        elapsed = 0;
     }
 
+    @Override
     public void update() {
-        switch (currentState) {
+
+        switch (state) {
             case FLYING:
                 move();
                 break;
 
             case EXPLODING:
-                elapsed++;
+                if (EXPLOSION_DURATION < (System.currentTimeMillis() - elapsed) / 1000.0) {
+                    state = State.DESTROYED;
+                }
                 break;
         }
+    }
 
-        if (elapsed > EXPLOSION_DURATION) {
-            currentState = State.DESTROYED;
+    @Override
+    public void draw(float deltaTime) {
+        this.deltaTime = deltaTime;
+        switch (state) {
+            case FLYING:
+                spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
+                break;
+            case EXPLODING:
+                currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
+                spriteBatch.draw(currentFrame, getBigBounds().x, getBigBounds().y);
+                break;
+        }
+    }
+
+    @Override
+    public void explode() {
+        if (explosionAnimation == null) {
+            setExplosionAnimation();
+            state = State.EXPLODING;
+            elapsed = System.currentTimeMillis();
         }
     }
 
@@ -108,6 +129,22 @@ public class Bullet extends DynamicGameObject {
         }
     }
 
+    @Override
+    public void setExplosionAnimation() {
+        TextureRegion[] explosionFrames = new TextureRegion[3];
+
+        Texture tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl1.png"));
+        explosionFrames[0] = new TextureRegion(tempTexture, 32, 32);
+
+        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl2.png"));
+        explosionFrames[1] = new TextureRegion(tempTexture, 32, 32);
+
+        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl3.png"));
+        explosionFrames[2] = new TextureRegion(tempTexture, 32, 32);
+
+        explosionAnimation = new  Animation<TextureRegion>(0.25f, explosionFrames);
+    }
+
     private void setBigBounds() {
         float x = 0;
         float y = 0;
@@ -133,45 +170,11 @@ public class Bullet extends DynamicGameObject {
     }
 
     @Override
-    public void draw(float deltaTime) {
-        this.deltaTime = deltaTime;
-        switch (currentState) {
-            case FLYING:
-                spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
-                break;
-            case EXPLODING:
-                currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
-                spriteBatch.draw(currentFrame, getBigBounds().x, getBigBounds().y);
-                break;
+    public void respondWallCollision() {
+        if (state != State.FLYING) {
+            return;
         }
-    }
 
-    @Override
-    public void explode() {
-        if (explosionAnimation == null) {
-            setExplosionAnimation();
-            currentState = State.EXPLODING;
-        }
-    }
-
-    @Override
-    public void setExplosionAnimation() {
-        TextureRegion[] explosionFrames = new TextureRegion[3];
-
-        Texture tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl1.png"));
-        explosionFrames[0] = new TextureRegion(tempTexture, 32, 32);
-
-        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl2.png"));
-        explosionFrames[1] = new TextureRegion(tempTexture, 32, 32);
-
-        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl3.png"));
-        explosionFrames[2] = new TextureRegion(tempTexture, 32, 32);
-
-        explosionAnimation = new  Animation<TextureRegion>(0.25f, explosionFrames);
-    }
-
-    @Override
-    public void respondBrickCollision() {
         velocity = 4;
         for (int i = 0; i < 3; i++) {
             move();
@@ -182,30 +185,17 @@ public class Bullet extends DynamicGameObject {
     }
 
     @Override
-    public void respondSteelCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
-    public void respondMapBoundsCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
     public void respondTankCollision(Tank tank) {
         if (tank.state != Tank.State.SPAWNING) {
-            respondBrickCollision();
+            if (!(tank instanceof Enemy && this.tank instanceof Enemy)) {
+                respondWallCollision();
+            }
         }
     }
 
     @Override
     public void respondBulletCollision(Bullet bullet) {
-        currentState = State.DESTROYED;
-    }
-
-    @Override
-    public void respondFortressCollision() {
-        respondBrickCollision();
+        state = State.DESTROYED;
     }
 
     public Rectangle getBigBounds() {
@@ -214,7 +204,7 @@ public class Bullet extends DynamicGameObject {
     }
 
     public State getState() {
-        return currentState;
+        return state;
     }
 
     public Tank getTank() {

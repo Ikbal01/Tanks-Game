@@ -18,17 +18,7 @@ public abstract class DynamicGameObject extends GameObject {
 
     public abstract void draw(float deltaTime);
 
-    public abstract void respondBrickCollision();
-
-    public abstract void respondSteelCollision();
-
-    public abstract void respondMapBoundsCollision();
-
-    public abstract void respondTankCollision(Tank tank);
-
-    public abstract void respondBulletCollision(Bullet bullet);
-
-    public abstract void respondFortressCollision();
+    public abstract void respondWallCollision();
 
     protected abstract void explode();
 

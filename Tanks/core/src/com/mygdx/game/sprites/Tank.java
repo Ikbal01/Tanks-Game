@@ -17,10 +17,12 @@ public abstract class Tank extends DynamicGameObject {
     public static final int TANK_HEIGHT = 32;
 
     private static final int SPAWNING_TIME = 3;
+    private static final int FROZEN_TIME = 12;
     private static final float EXPLOSION_DURATION = 0.25f;
 
 
-    public enum State {SPAWNING, NORMAL, SUPER_TANK, WALL_BREAKING, SHIELD, FROZEN, EXPLODING, DESTROYED}
+    public enum State {SPAWNING, NORMAL, SUPER_TANK, WALL_BREAKING,
+        SHIELD, FROZEN, EXPLODING, DESTROYED}
     protected State state;
 
     protected SpriteBatch spriteBatch;
@@ -44,6 +46,7 @@ public abstract class Tank extends DynamicGameObject {
     protected Array<Bullet> bullets;
 
     protected int armour;
+    protected int lives;
     protected float bulletVelocity;
 
     private double remainder;
@@ -51,8 +54,9 @@ public abstract class Tank extends DynamicGameObject {
 
     protected float deltaTime;
 
-    private long spawningElapsed;
-    private long startExplodingTime;
+    private long spawningTimer;
+    private long explodingTimer;
+    private long frozenTimer;
 
 
     public Tank(float x, float y, World world) {
@@ -68,9 +72,7 @@ public abstract class Tank extends DynamicGameObject {
 
         previousPosition = new Vector2(getPosition());
 
-        spawningElapsed = System.currentTimeMillis();
-
-        setSpawningAnimation();
+        setSpawningState();
     }
 
     @Override
@@ -78,32 +80,39 @@ public abstract class Tank extends DynamicGameObject {
 
         switch (state) {
             case SPAWNING:
-                if (SPAWNING_TIME < (System.currentTimeMillis() - spawningElapsed) / 1000.0 ) {
+                if (SPAWNING_TIME < (System.currentTimeMillis() - spawningTimer) / 1000.0 ) {
 
-                    Array<Tank> tanks = world.getAllTanks();
-
-                    state = State.NORMAL;
+                    Array<Tank> tanks = world.getTanks();
+                    boolean overlaps = false;
 
                     for (Tank tank : tanks) {
-                        if (tank != this && this.getBounds().overlaps(tank.getBounds())) {
-                            state = State.SPAWNING;
+                        if (tank != this && tank.getBounds().overlaps(this.getBounds())) {
+                            overlaps = true;
                         }
                     }
-                }
-            case NORMAL:
-                if (bullets.size > 0 && bullets.get(0).getState() == Bullet.State.DESTROYED) {
-                    bullets.clear();
-                }
 
-                if (bullets.size > 0) {
-                    bullets.get(0).update();
+                    if (!overlaps) {
+                        state = State.NORMAL;
+                    }
+                }
+                updateBullet();
+                break;
+
+            case NORMAL:
+                updateBullet();
+                break;
+            case FROZEN:
+                if (FROZEN_TIME < (System.currentTimeMillis() - frozenTimer) / 1000.0) {
+                    setNormalState();
                 }
                 break;
 
             case EXPLODING:
-                if (EXPLOSION_DURATION < (System.currentTimeMillis() - startExplodingTime) / 1000.0) {
-                    setState(State.DESTROYED);
+                if (EXPLOSION_DURATION < (System.currentTimeMillis() - explodingTimer) / 1000.0) {
+                    setDestroyedState();
+                    break;
                 }
+                updateBullet();
                 break;
         }
     }
@@ -139,61 +148,93 @@ public abstract class Tank extends DynamicGameObject {
         spawningAnimation = new Animation<TextureRegion>(0.05f, spawning);
     }
 
-    public void fire() {
-        if (bullets.size == 0) {
-            bullets.add(new Bullet(muzzle.x, muzzle.y, this, direction, spriteBatch, bulletVelocity));
+    protected void updateBullet() {
+        if (bullets.size > 0 && bullets.get(0).getState() == Bullet.State.DESTROYED) {
+            bullets.clear();
+        }
+
+        if (bullets.size > 0) {
+            bullets.get(0).update();
         }
     }
 
-    public void moveUp() {
-        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
+    public void fire() {
+        if (bullets.size == 0) {
+            Vector2 currMuzzle = getMuzzle();
+            bullets.add(new Bullet(currMuzzle.x, currMuzzle.y, this, direction, spriteBatch, bulletVelocity));
+        }
+    }
+
+    public void stop() {
+        frozenTimer = System.currentTimeMillis();
+        setState(State.FROZEN);
+    }
+
+    public void move(Direction direction) {
+        if (state == State.FROZEN) {
+            return;
+        }
+
+        if ((this.direction == Direction.LEFT || this.direction == Direction.RIGHT)
+                && (direction == Direction.DOWN || direction == Direction.UP)) {
+
             setVerticalRail();
         }
-        currAnimation = upMoveAnimation;
+
+        if ((this.direction == Direction.UP || this.direction == Direction.DOWN)
+                && (direction == Direction.LEFT || direction == Direction.RIGHT)) {
+
+            setHorizontalRail();
+        }
+
         previousPosition.set(getPosition());
+
+        switch (direction) {
+            case UP:
+                moveUp();
+                break;
+            case DOWN:
+                moveDown();
+                break;
+            case LEFT:
+                moveLeft();
+                break;
+            case RIGHT:
+                moveRight();
+                break;
+        }
+    }
+
+    private void moveUp() {
+        currAnimation = upMoveAnimation;
+        direction = Direction.UP;
 
         position.y += velocity;
         bounds.y += velocity;
-        muzzle.set(getPosition().x + 12, getPosition().y + TANK_HEIGHT);
-        direction = Direction.UP;
     }
 
-    public void moveDown() {
-        if (direction == Direction.LEFT || direction == Direction.RIGHT) {
-            setVerticalRail();
-        }
+    private void moveDown() {
         currAnimation = downMoveAnimation;
-        previousPosition.set(getPosition());
+        direction = Direction.DOWN;
 
         position.y -= velocity;
         bounds.y -= velocity;
-        muzzle.set(getPosition().x + 12, getPosition().y);
-        direction = Direction.DOWN;
     }
 
-    public void moveLeft() {
-        if (direction == Direction.UP || direction == Direction.DOWN) {
-            setHorizontalRail();
-        }
+    private void moveLeft() {
         currAnimation = leftMoveAnimation;
-        previousPosition.set(getPosition());
+        direction = Direction.LEFT;
 
         position.x -= velocity;
         bounds.x -= velocity;
-        muzzle.set(getPosition().x, getPosition().y + 12);
-        direction = Direction.LEFT;
     }
 
-    public void moveRight() {
-        if (direction == Direction.UP || direction == Direction.DOWN) {
-            setHorizontalRail();
-        }
+    private void moveRight() {
         currAnimation = rightMoveAnimation;
-        previousPosition.set(getPosition());
+        direction = Direction.RIGHT;
+
         position.x += velocity;
         bounds.x += velocity;
-        muzzle.set(getPosition().x + (TANK_WIDTH), getPosition().y + 12);
-        direction = Direction.RIGHT;
     }
 
     protected void setHorizontalRail() {
@@ -247,12 +288,33 @@ public abstract class Tank extends DynamicGameObject {
 
     @Override
     public void explode() {
-        startExplodingTime = System.currentTimeMillis();
+        explodingTimer = System.currentTimeMillis();
         setState(State.EXPLODING);
 
         setExplosionAnimation();
         currAnimation = explosionAnimation;
         position.set(getPosition().x - 16, getPosition().y - 16);
+    }
+
+    public Vector2 getMuzzle() {
+        Vector2 muzzPosition = new Vector2();
+
+        switch (direction) {
+            case UP:
+                muzzPosition.set(getPosition().x + 12, getPosition().y + TANK_HEIGHT);
+                break;
+            case DOWN:
+                muzzPosition.set(getPosition().x + 12, getPosition().y);
+                break;
+            case LEFT:
+                muzzPosition.set(getPosition().x, getPosition().y + 12);
+                break;
+            case RIGHT:
+                muzzPosition.set(getPosition().x + (TANK_WIDTH), getPosition().y + 12);
+                break;
+        }
+
+        return muzzPosition;
     }
 
     public Bullet getBullet() {
@@ -269,6 +331,25 @@ public abstract class Tank extends DynamicGameObject {
 
     public Tank.State getState() {
         return state;
+    }
+
+    public void setSpawningState() {
+        state = State.SPAWNING;
+        setSpawningAnimation();
+        spawningTimer = System.currentTimeMillis();
+    }
+
+    public void setFrozenState() {
+        state = State.FROZEN;
+        frozenTimer = System.currentTimeMillis();
+    }
+
+    public void setNormalState() {
+        state = State.NORMAL;
+    }
+
+    public void setDestroyedState() {
+        state = State.DESTROYED;
     }
 
     public void setState(State state) {

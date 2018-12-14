@@ -11,29 +11,30 @@ public abstract class StaticGameObject extends GameObject {
     private MapObject cell;
     private TiledMapTileLayer layer;
 
-    private boolean destroyed;
-
     public StaticGameObject(Rectangle bounds, MapObject cell, TiledMapTileLayer layer) {
         super(bounds.x, bounds.y, bounds.width, bounds.height);
 
         this.cell = cell;
         this.layer = layer;
-
-        destroyed = false;
     }
 
-    public void destroy() {
-        int x = (int)(getPosition().x / TILE_WIDTH );
-        int y = (int)(getPosition().y / TILE_HEIGHT );
+    protected void destroy() {
+        int x = (int) (getPosition().x / TILE_WIDTH);
+        int y = (int) (getPosition().y / TILE_HEIGHT);
 
         if (layer.getCell(x, y) != null) {
             layer.getCell(x, y).setTile(null);
         }
 
-        destroyed = true;
+        isDestroyed = true;
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
+    @Override
+    public void respondTankCollision(Tank tank) {
+        if (tank.getState() == Tank.State.SUPER_TANK
+                || tank.getState() == Tank.State.WALL_BREAKING) {
+
+            destroy();
+        }
     }
 }

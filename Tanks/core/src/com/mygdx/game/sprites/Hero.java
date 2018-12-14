@@ -9,12 +9,17 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class Hero extends Tank{
+    private static final int WALL_BREAKING_TIME = 12;
+    private static final int SHIELD_TIME = 12;
+
     private Random random;
 
     private int lives;
     private int stars;
-<<<<<<< HEAD
     private int kills;
+
+    private long wallBreakingTimer;
+    private long shieldTimer;
 
     public Hero(float x, float y, World world, int lives, int stars, int kills) {
         super(x, y, world);
@@ -37,17 +42,19 @@ public class Hero extends Tank{
         super.update();
 
         switch (state) {
-            case SPAWNING:
-
-            case NORMAL:
-
-                if (bullets.size > 0 && bullets.get(0).getState() == Bullet.State.DESTROYED) {
-                    bullets.clear();
+            case SHIELD:
+                if (SHIELD_TIME < (System.currentTimeMillis() - shieldTimer) / 1000.0) {
+                    state = State.NORMAL;
                 }
 
-                if (bullets.size > 0) {
-                    bullets.get(0).update();
+                updateBullet();
+                break;
+
+            case WALL_BREAKING:
+                if (WALL_BREAKING_TIME < (System.currentTimeMillis() - wallBreakingTimer) / 1000.0) {
+                    state = State.NORMAL;
                 }
+                updateBullet();
                 break;
 
             case SUPER_TANK:
@@ -64,6 +71,7 @@ public class Hero extends Tank{
                     bullet.update();
                 }
                 break;
+
             case DESTROYED:
                 if (lives > 0) {
                     lives--;
@@ -80,36 +88,89 @@ public class Hero extends Tank{
         } else {
             bullets.add(new Bullet(muzzle.x, muzzle.y, this, direction, spriteBatch, bulletVelocity));
         }
-=======
+    }
 
-    public Hero(float x, float y, SpriteBatch spriteBatch, int lives, int stars) {
-        super(x, y, spriteBatch);
-
-        this.lives = lives;
-        this.stars = stars;
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+    private void updateTankSpecif() {
+        color = Color.values()[3];
+        int categoryIndex = (1 + stars) % 8;
+        category = TankCategory.values()[categoryIndex];
+        armour = category.getArmour();
+        bulletVelocity = category.getBulletVelocity();
+        velocity = category.getVelocity();
     }
 
     public void addExtraLife() {
         lives++;
     }
 
-    public void addShield() {
-        setState(State.SHIELD);
-    }
-
     public void improve() {
         stars++;
-<<<<<<< HEAD
 
         updateTankSpecif();
         updateAnimation();
-=======
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+    }
+
+    private void respawn() {
+        stars = 0;
+        position.set(208, 64);
+        bounds.setX(208);
+        bounds.setY(64);
+        currAnimation = upMoveAnimation;
+
+        setSpawningState();
+        updateTankSpecif();
+        updateAnimation();
+    }
+
+    @Override
+    public void respondWallCollision() {
+        position.set(previousPosition.x, previousPosition.y);
+        bounds.setX(previousPosition.x);
+        bounds.setY(previousPosition.y);
+    }
+
+    @Override
+    public void respondTankCollision(Tank tank) {
+        if (tank.state != State.SPAWNING && state != State.SPAWNING) {
+            respondWallCollision();
+        }
+    }
+
+    @Override
+    public void respondBulletCollision(Bullet bullet) {
+        if (state == State.SPAWNING || bullet.getState() != Bullet.State.FLYING) {
+            return;
+        }
+
+        if (getState() != State.SHIELD) {
+            if (bullet.getTank() instanceof Enemy) {
+
+                armour--;
+                if (armour == 0) {
+                    explode();
+                }
+
+            } else {
+                stop();
+            }
+        }
+    }
+
+    public void setShieldMod() {
+        setState(State.SHIELD);
+
+        shieldTimer = System.currentTimeMillis();
     }
 
     public void setWallBreakingMod() {
         setState(State.WALL_BREAKING);
+        wallBreakingTimer = System.currentTimeMillis();
+    }
+
+    public void setNormalMod() {
+        setState(State.NORMAL);
+        updateTankSpecif();
+        updateAnimation();
     }
 
     public void setSuperTankMod() {
@@ -123,84 +184,23 @@ public class Hero extends Tank{
         updateAnimation();
     }
 
-    public void setNormalMod() {
-        setState(State.NORMAL);
-        updateTankSpecif();
-        updateAnimation();
-    }
-
-    private void respawn() {
-        state = State.SPAWNING;
-
-        stars = 0;
-        position.set(208, 64);
-        bounds.setX(208);
-        bounds.setY(64);
-
-        updateTankSpecif();
-        updateAnimation();
-        currAnimation = upMoveAnimation;
-    }
-
-    private void updateTankSpecif() {
-        color = Color.values()[3];
-        int categoryIndex = (2 + stars) % 8;
-        category = TankCategory.values()[categoryIndex];
-        armour = category.getArmour();
-        bulletVelocity = category.getBulletVelocity();
-        velocity = category.getVelocity();
-    }
-
-    @Override
-    public void respondBrickCollision() {
-        position.set(previousPosition.x, previousPosition.y);
-        bounds.setX(previousPosition.x);
-        bounds.setY(previousPosition.y);
-    }
-
-    @Override
-    public void respondSteelCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
-    public void respondMapBoundsCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
-    public void respondTankCollision(Tank tank) {
-        if (tank.state != State.SPAWNING && state != State.SPAWNING) {
-            respondBrickCollision();
-        }
-    }
-
-    @Override
-    public void respondBulletCollision(Bullet bullet) {
-        if (state == State.SPAWNING) {
-            return;
-        }
-
-        if (getState() != State.SHIELD) {
-            if (bullet.getTank() instanceof Enemy) {
-
-                armour--;
-                if (armour == 0) {
-                    explode();
-                }
-
-            } else {
-                state = State.FROZEN;
-            }
-        }
-    }
-
-    @Override
-    public void respondFortressCollision() {
-        respondBrickCollision();
-    }
-
     public Array<Bullet> getBullets() {
         return bullets;
+    }
+
+    public int getLives() {
+        return lives;
+    }
+
+    public int getStars() {
+        return stars;
+    }
+
+    public int getKills() {
+        return kills;
+    }
+
+    public void increaseKills() {
+        kills++;
     }
 }

@@ -9,13 +9,11 @@ import java.util.Random;
 
 public class Enemy extends Tank {
     private static final float DIRECTION_CHANGE_TIME = 3f;
-    private static final float FIRE_TIME_DURATION = 1f;
-    private static final float FROZEN_TIME = 15f;
+    private static final float FIRE_TIME = 1f;
 
     private Random random;
-    private long startDirectionTime;
-    private long startFireTime;
-    private long startFrozenTime;
+    private long directionTimer;
+    private long fireTimer;
 
     public Enemy(float x, float y, World world) {
         super(x, y, world);
@@ -30,44 +28,41 @@ public class Enemy extends Tank {
         category = TankCategory.values()[randomCategoryIndex];
 
         armour = category.getArmour();
+        lives = 0;
         bulletVelocity = category.getBulletVelocity();
         velocity = category.getVelocity();
         updateAnimation();
         currAnimation = downMoveAnimation;
 
-        startDirectionTime = System.currentTimeMillis();
-        startFireTime = System.currentTimeMillis();
+        directionTimer = System.currentTimeMillis();
+        fireTimer = System.currentTimeMillis();
     }
 
     @Override
     public void update() {
         super.update();
 
-        switch (getState()) {
+        switch (state) {
+
             case SPAWNING:
-
             case NORMAL:
-                move();
-                if (DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - startDirectionTime) / 1000.0)) {
+
+                move(direction);
+                if (DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - directionTimer) / 1000.0)) {
                     moveRandomCorridor();
-                    startDirectionTime = System.currentTimeMillis();
+                    directionTimer = System.currentTimeMillis();
                 }
-                if (FIRE_TIME_DURATION < ((System.currentTimeMillis() - startFireTime) / 1000.0)) {
+                if (FIRE_TIME < ((System.currentTimeMillis() - fireTimer) / 1000.0)) {
                     fire();
-                    startFireTime = System.currentTimeMillis();
+                    fireTimer = System.currentTimeMillis();
                 }
-                break;
-
-            case FROZEN:
-                if (FROZEN_TIME < (System.currentTimeMillis() - startFrozenTime) / 1000.0) {
-                    setState(State.NORMAL);
-                }
-                break;
-
-            case EXPLODING:
-
                 break;
         }
+    }
+
+    @Override
+    public void draw(float deltaTime)  {
+        super.draw(deltaTime);
     }
 
     private void moveRandomCorridor() {
@@ -99,23 +94,6 @@ public class Enemy extends Tank {
         }
     }
 
-    public void move() {
-        switch (direction) {
-            case UP:
-                moveUp();
-                break;
-            case DOWN:
-                moveDown();
-                break;
-            case LEFT:
-                moveLeft();
-                break;
-            case RIGHT:
-                moveRight();
-                break;
-        }
-    }
-
     private void changeDirection() {
         int rand = random.nextInt(4) + 1;
         switch (rand) {
@@ -134,13 +112,8 @@ public class Enemy extends Tank {
         }
     }
 
-    public void stop() {
-        startFrozenTime = System.currentTimeMillis();
-        setState(State.FROZEN);
-    }
-
     @Override
-    public void respondBrickCollision() {
+    public void respondWallCollision() {
         position.set(previousPosition.x, previousPosition.y);
         bounds.setX(previousPosition.x);
         bounds.setY(previousPosition.y);
@@ -152,42 +125,27 @@ public class Enemy extends Tank {
     }
 
     @Override
-    public void respondSteelCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
-    public void respondMapBoundsCollision() {
-        respondBrickCollision();
-    }
-
-    @Override
     public void respondTankCollision(Tank tank) {
         if (tank.state != State.SPAWNING && state != State.SPAWNING) {
-            respondBrickCollision();
+            respondWallCollision();
         }
     }
 
     @Override
     public void respondBulletCollision(Bullet bullet) {
-        if (state == State.SPAWNING) {
+        if (state == State.SPAWNING || bullet.getState() != Bullet.State.FLYING) {
             return;
         }
 
-        armour--;
-        if (armour == 0) {
-            explode();
+        if (bullet.getTank() instanceof Hero) {
+
+            armour--;
+            if (armour == 0) {
+                Hero hero = (Hero)bullet.getTank();
+                hero.increaseKills();
+                explode();
+            }
         }
-    }
 
-    @Override
-    public void respondFortressCollision() {
-        fire();
     }
-
-    @Override
-    public void draw(float deltaTime)  {
-        super.draw(deltaTime);
-    }
-
 }

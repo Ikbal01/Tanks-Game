@@ -12,14 +12,11 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.Tanks;
 import com.mygdx.game.screens.GameOverScreen;
-<<<<<<< HEAD
 import com.mygdx.game.screens.MenuScreen;
-=======
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+import com.mygdx.game.screens.StageScreen;
 import com.mygdx.game.sprites.*;
 import com.mygdx.game.treasures.*;
 
-import java.awt.*;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -44,17 +41,13 @@ public class World {
     private static final int Enemies_SPAWNING_POS_3_X = 400;
     private static final int Enemies_SPAWNING_POS_Y = 400;
 
-    private static final int FORTRESS_POS_X = 208;
-    private static final int FORTRESS_POS_Y = 16;
+    private static final int FORTRESS_INIT_POS_X = 208;
+    private static final int FORTRESS_INIT_POS_Y = 16;
 
     private static final int NEW_TREASURE_TIME = 17;
-    private static final int NEW_ENEMIES_GENERATE_TIME = 30;
+    private static final int NEW_ENEMIES_GENERATE_TIME = 20;
 
-<<<<<<< HEAD
-    public enum State {NORMAL, BASE_DEFENCE, GAME_OVER, NEXT_LEVEL}
-=======
-    public enum State {PLAYING, GAME_OVER, NEXT_LEVEL}
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+    public enum State {NORMAL, PAUSE, GAME_OVER, NEXT_LEVEL}
     private State state;
 
     public static Texture items;
@@ -68,20 +61,19 @@ public class World {
     private SpriteBatch spriteBatch;
     private StageOption stageOption;
     private boolean isMultiplayer;
-<<<<<<< HEAD
     private MenuScreen.Difficulty difficulty;
     private int stage;
-=======
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+    private int[] lives;
+    private int[] stars;
+    private int[] kills;
+    private int stageEnemyCount;
 
     private Hero player1;
     private Hero player2;
-    private Array<Enemy> enemies;
+    private Array<Tank> tanks;
 
-    private Array<Steel> steelBlocks;
-    private Array<Brick> bricks;
+    private Array<GameObject> staticGameObjects;
     private Fortress fortress;
-    private Rectangle fortressDefender;
 
     private Treasure treasure;
 
@@ -91,99 +83,117 @@ public class World {
     private long treasureTimer;
     private long newEnemiesTimer;
 
+    private int destroyedEnemyCount;
+    private int createdEnemyCount;
+
+    private Random random;
+
     public World(StageOption stageOption) {
 
         this.stageOption = stageOption;
         this.game = stageOption.getGame();
         this.isMultiplayer = stageOption.isMultiplayer();
         this.spriteBatch = game.spriteBatch;
-<<<<<<< HEAD
         this.difficulty = stageOption.getDifficulty();
         this.stage = stageOption.getStage();
-=======
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+        this.lives = stageOption.getLives();
+        this.stars = stageOption.getStars();
+        this.kills = stageOption.getTotalKills();
 
+        random = new Random();
         state = State.NORMAL;
 
         items = new Texture(Gdx.files.internal("BattleTanksSheetTransparent.png"));
+        destroyedEnemyCount = 0;
+        createdEnemyCount = 0;
+        calculateStageMaxEnemyCount();
 
         mapLoader = new TmxMapLoader();
-        map = mapLoader.load("stage" + stageOption.getStage() + ".tmx");
+        map = mapLoader.load("maps\\stage" + stageOption.getStage() + ".tmx");
         renderer = new OrthogonalTiledMapRenderer(map);
         layer = (TiledMapTileLayer) map.getLayers().get(1);
 
-        enemies = new Array<Enemy>();
+        tanks = new Array<Tank>();
         initPlayers();
         generateEnemies();
+
+        staticGameObjects = new Array<GameObject>();
+        fortress = new Fortress(FORTRESS_INIT_POS_X, FORTRESS_INIT_POS_Y, this);
+        staticGameObjects.add(fortress);
         initializeBricks();
-        initializeSteels();
-        fortress = new Fortress(FORTRESS_POS_X, FORTRESS_POS_Y);
+        initializeSteel();
+        initializeWater();
 
         collisionSystem = new CollisionSystem(this);
-        gameController = new GameController(player1, player2, stageOption.isMultiplayer());
+        gameController = new GameController(this);
 
         treasureTimer = System.currentTimeMillis();
         newEnemiesTimer = System.currentTimeMillis();
+
     }
 
     public void update() {
-        if (state == State.GAME_OVER) {
-            game.setScreen(new GameOverScreen(game));
+
+        System.out.println(state);
+
+        switch (state) {
+            case NORMAL:
+
+                if (stageEnemyCount == destroyedEnemyCount) {
+                    state = State.NEXT_LEVEL;
+                }
+
+                removeDestroyedTanks();
+                removeDestroyedStaticObjects();
+
+                for (int i = 0; i < tanks.size; i++) {
+                    tanks.get(i).update();
+                }
+
+                generateEnemies();
+                updateTreasure();
+                fortress.update();
+
+                gameController.update();
+                collisionSystem.update();
+                break;
+
+            case PAUSE:
+                gameController.update();
+                break;
+
+            case NEXT_LEVEL:
+                StageOption stageOption = generateStageOption();
+                game.setScreen(new StageScreen(stageOption));
+                break;
+
+            case GAME_OVER:
+                game.setScreen(new GameOverScreen(game));
+                break;
         }
-
-        removeDestroyedEnemies();
-        removeDestroyedBricks();
-        removeDestroyedSteelBlocks();
-
-        if (player1.getState() != Tank.State.DESTROYED) {
-            player1.update();
-        }
-        if (player2 != null && player2.getState() != Tank.State.DESTROYED) {
-            player2.update();
-        }
-
-        for (Enemy enemy : enemies) {
-            enemy.update();
-        }
-
-        generateEnemies();
-        updateTreasure();
-
-        gameController.update();
-        collisionSystem.update();
-
     }
 
-    private void removeDestroyedEnemies() {
-        Iterator<Enemy> iterator = enemies.iterator();
+    private void removeDestroyedTanks() {
+        Iterator<Tank> iterator = tanks.iterator();
 
         while (iterator.hasNext()) {
-            Enemy enemy = iterator.next();
-            if (enemy.getState() == Tank.State.DESTROYED) {
+            Tank tank = iterator.next();
+            if (tank.getState() == Tank.State.DESTROYED) {
+                if (tank instanceof Enemy) {
+                    destroyedEnemyCount++;
+                }
                 iterator.remove();
             }
         }
     }
 
-    private void removeDestroyedBricks() {
-        Iterator<Brick> iterator = bricks.iterator();
+    private void removeDestroyedStaticObjects() {
+        Iterator<GameObject> iterator = staticGameObjects.iterator();
 
         while (iterator.hasNext()) {
-            Brick brick = iterator.next();
+            GameObject object = iterator.next();
 
-            if (brick.isDestroyed()) {
-                iterator.remove();
-            }
-        }
-    }
-
-    private void removeDestroyedSteelBlocks() {
-        Iterator<Steel> iterator = steelBlocks.iterator();
-
-        while (iterator.hasNext()) {
-            Steel steelBlock = iterator.next();
-
-            if (steelBlock.isDestroyed()) {
+            if (object.isDestroyed()) {
                 iterator.remove();
             }
         }
@@ -194,58 +204,63 @@ public class World {
             generateTreasure();
             treasureTimer = System.currentTimeMillis();
         }
+
         if (treasure != null) {
             treasure.update();
-        }
 
-        if (treasure != null && treasure.getState() != Treasure.State.ACTIVE) {
-            treasure = null;
+            if (treasure.getState() != Treasure.State.ACTIVE) {
+                treasure = null;
+            }
         }
     }
 
     private void initPlayers() {
-<<<<<<< HEAD
-        player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y, this, 3, 3, 0);
+        player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y,
+                this, lives[0], stars[0], kills[0]);
+        tanks.add(player1);
 
-        if (stageOption.isMultiplayer()) {
-            player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y, this, 3, 3, 0);
-=======
-        player1 = new Hero(PLAYER_1_SPAWNING_POS_X, PLAYER_1_SPAWNING_POS_Y, spriteBatch);
+        player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y,
+                this, lives[1], stars[1], kills[1]);
+        tanks.add(player2);
 
-        if (stageOption.isMultiplayer()) {
-            player2 = new Hero(PLAYER_2_SPAWNING_POS_X, PLAYER_2_SPAWNING_POS_Y, spriteBatch);
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
+        if (!stageOption.isMultiplayer()) {
+            player2.setState(Tank.State.DESTROYED);
         }
+
     }
 
     private void initializeBricks() {
-        bricks = new Array<Brick>();
-
         for (MapObject cell : map.getLayers().get(2).getObjects().getByType(RectangleMapObject.class)) {
-            bricks.add(new Brick(cell, layer));
+            staticGameObjects.add(new Brick(cell, layer));
         }
     }
 
-    private void initializeSteels() {
-        steelBlocks = new Array<Steel>();
-
+    private void initializeSteel() {
         for (MapObject cell : map.getLayers().get(3).getObjects().getByType(RectangleMapObject.class)) {
-            steelBlocks.add(new Steel(cell, layer));
+            staticGameObjects.add(new Steel(cell, layer));
+        }
+    }
+
+    private void initializeWater() {
+        for (MapObject cell : map.getLayers().get(4).getObjects().getByType(RectangleMapObject.class)) {
+            staticGameObjects.add(new Water(cell, layer));
         }
     }
 
     private void generateEnemies() {
-        if (NEW_ENEMIES_GENERATE_TIME < ((System.currentTimeMillis() - newEnemiesTimer) / 1000.0)) {
-            enemies.add(new Enemy(Enemies_SPAWNING_POS_1_X, Enemies_SPAWNING_POS_Y, this));
-            enemies.add(new Enemy(Enemies_SPAWNING_POS_2_X, Enemies_SPAWNING_POS_Y, this));
-            enemies.add(new Enemy(Enemies_SPAWNING_POS_3_X, Enemies_SPAWNING_POS_Y, this));
+        if (NEW_ENEMIES_GENERATE_TIME < ((System.currentTimeMillis() - newEnemiesTimer) / 1000.0)
+                && createdEnemyCount < stageEnemyCount) {
 
+            tanks.add(new Enemy(Enemies_SPAWNING_POS_1_X, Enemies_SPAWNING_POS_Y, this));
+            tanks.add(new Enemy(Enemies_SPAWNING_POS_2_X, Enemies_SPAWNING_POS_Y, this));
+            tanks.add(new Enemy(Enemies_SPAWNING_POS_3_X, Enemies_SPAWNING_POS_Y, this));
+
+            createdEnemyCount += 3;
             newEnemiesTimer = System.currentTimeMillis();
         }
     }
 
     private void generateTreasure() {
-        Random random = new Random();
 
         int ran = random.nextInt(8) + 1;
         int x = random.nextInt(369) + 16;
@@ -276,55 +291,72 @@ public class World {
         }
     }
 
+    private StageOption generateStageOption() {
+        StageOption stageOption = new StageOption();
+
+        stageOption.setGame(game);
+        stageOption.setDifficulty(difficulty);
+        stageOption.setMultiplayer(isMultiplayer);
+        stageOption.setStage(++stage);
+        stageOption.setLives(player1.getLives(), player2.getLives());
+        stageOption.setStars(player1.getStars(), player2.getStars());
+        stageOption.setTotalKills(player1.getKills(), player2.getKills());
+
+        return stageOption;
+    }
+
+    private void calculateStageMaxEnemyCount() {
+        switch (difficulty) {
+            case EASY:
+                stageEnemyCount = 15 + stage * 3;
+                break;
+            case NORMAL:
+                stageEnemyCount = 15 + stage * 6;
+                break;
+            case HARD:
+                stageEnemyCount = 15 + stage * 9;
+        }
+    }
+
     public void draw(float stateTime) {
-<<<<<<< HEAD
-        if (player1.getState() != Tank.State.DESTROYED) {
-            player1.draw(stateTime);
+
+        for (Tank tank : tanks) {
+            tank.draw(stateTime);
         }
-        if (isMultiplayer && player2.getState() != Tank.State.DESTROYED) {
-=======
-        player1.draw(stateTime);
-        if (isMultiplayer) {
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
-            player2.draw(stateTime);
-        }
-        for (Enemy enemy : enemies) {
-            enemy.draw(stateTime);
-        }
+
         if (treasure != null) {
             treasure.draw();
         }
+
+        fortress.draw();
     }
 
     public void killEnemies() {
-        for (Enemy enemy : enemies) {
-            enemy.explode();
+        for (Tank tank : tanks) {
+            if (tank instanceof Enemy) {
+                tank.explode();
+            }
         }
-    }
-
-    public void defendBase() {
-        state = State.BASE_DEFENCE;
-        fortressDefender = new Rectangle(192, 16, 64, 48);
     }
 
     public void stopTime() {
-        for (Enemy enemy : enemies) {
-            enemy.stop();
+        for (Tank tank : tanks) {
+            if (tank instanceof Enemy) {
+                ((Enemy) tank).stop();
+            }
         }
     }
 
-    public Array<Tank> getAllTanks() {
-        Array<Tank> tanks = new Array<Tank>();
-        tanks.addAll(enemies);
-        if (player1.getState() != Tank.State.DESTROYED) {
-            tanks.add(player1);
-        }
+    public void setGameOverState() {
+        state = State.GAME_OVER;
+    }
 
-        if (player2.getState() != Tank.State.DESTROYED) {
-            tanks.add(player2);
-        }
+    public void setPauseState() {
+        state = State.PAUSE;
+    }
 
-        return tanks;
+    public void setNormalState() {
+        state = State.NORMAL;
     }
 
     public OrthogonalTiledMapRenderer getRenderer() {
@@ -347,16 +379,12 @@ public class World {
         this.state = state;
     }
 
-    public Array<Enemy> getEnemies() {
-        return enemies;
+    public Array<Tank> getTanks() {
+        return tanks;
     }
 
-    public Array<Brick> getBricks() {
-        return bricks;
-    }
-
-    public Array<Steel> getSteelBlocks() {
-        return steelBlocks;
+    public Array<GameObject> getStaticGameObjects() {
+        return staticGameObjects;
     }
 
     public Treasure getTreasure() {
@@ -369,11 +397,14 @@ public class World {
 
     public boolean isMultiplayer() {
         return isMultiplayer;
-<<<<<<< HEAD
     }
 
     public MenuScreen.Difficulty getDifficulty() {
         return difficulty;
+    }
+
+    public Tanks getGame() {
+        return game;
     }
 
     public int getStage() {
@@ -382,7 +413,5 @@ public class World {
 
     public State getState() {
         return state;
-=======
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
     }
 }

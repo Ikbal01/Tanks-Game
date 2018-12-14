@@ -11,10 +11,16 @@ public class StageOption {
     private int stage;
     private int[] lives;
     private int[] stars;
+    private int[] totalKills;
 
     public StageOption() {
         lives = new int[2];
         stars = new int[2];
+        totalKills = new int[2];
+    }
+
+    public int[] getTotalKills() {
+        return totalKills;
     }
 
     public int[] getLives() {
@@ -49,6 +55,11 @@ public class StageOption {
     public void setStars(int player1, int player2) {
         this.stars[0] = player1;
         this.stars[1] = player2;
+    }
+
+    public void setTotalKills(int player1, int player2) {
+        this.totalKills[0] = player1;
+        this.totalKills[1] = player2;
     }
 
     public void setGame(Tanks game) {

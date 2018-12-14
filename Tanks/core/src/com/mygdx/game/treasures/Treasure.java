@@ -2,7 +2,9 @@ package com.mygdx.game.treasures;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.mygdx.game.sprites.Bullet;
 import com.mygdx.game.sprites.GameObject;
+import com.mygdx.game.sprites.Tank;
 import com.mygdx.game.world.World;
 
 public abstract class Treasure extends GameObject {
@@ -44,8 +46,14 @@ public abstract class Treasure extends GameObject {
         this.texture = texture;
     }
 
-    public void respondTankCollision() {
+    @Override
+    public void respondTankCollision(Tank tank) {
         currentState = State.USED;
+    }
+
+    @Override
+    public void respondBulletCollision(Bullet bullet) {
+        // do nothing
     }
 
     public TreasureType getType() {

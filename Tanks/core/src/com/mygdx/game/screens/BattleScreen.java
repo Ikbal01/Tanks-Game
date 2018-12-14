@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.Tanks;
+import com.mygdx.game.sprites.Fortress;
 import com.mygdx.game.world.StageOption;
 import com.mygdx.game.world.World;
 
@@ -50,13 +51,13 @@ public class BattleScreen extends ScreenAdapter {
         Gdx.gl.glClearColor(0.1f, 0.3f , 0.8f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        int[] mainLayers = {0, 1, 2, 3};
+        int[] mainLayers = {0, 1, 2, 3, 4};
         world.getRenderer().render(mainLayers);
 
-        if (world.getState() == World.State.BASE_DEFENCE) {
-            int[] baseDefenceLayers = {4, 5};
-            world.getRenderer().render(baseDefenceLayers);
+        if (world.getFortress().getState() == Fortress.State.DEFENCE) {
+            world.getRenderer().render(new int[] {5});
         }
+
         game.spriteBatch.setProjectionMatrix(camera.combined);
 
         stateTime += Gdx.graphics.getDeltaTime();

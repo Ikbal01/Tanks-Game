@@ -10,20 +10,23 @@ import com.mygdx.game.Tanks;
 import com.mygdx.game.world.StageOption;
 
 public class MenuScreen extends ScreenAdapter {
-<<<<<<< HEAD
-    public enum Difficulty {EASY(1), NORMAL(2), HARD(3);
+    public enum Difficulty {EASY(1, 3), NORMAL(2, 6), HARD(3, 9);
         private int index;
-        private Difficulty(int index) {
+        private int enemyCount;
+
+        private Difficulty(int index, int enemyCount) {
             this.index = index;
+            this.enemyCount = enemyCount;
         }
 
         public int getIndex() {
             return index;
         }
+
+        public int getEnemyCount() {
+            return enemyCount;
+        }
     }
-=======
-    public enum Difficulty {EASY, NORMAL, HARD}
->>>>>>> 9caec4292eb64338f8139d248e2bd8a7466f8693
 
     private Tanks game;
     private OrthographicCamera camera;
@@ -102,6 +105,7 @@ public class MenuScreen extends ScreenAdapter {
         stageOption.setDifficulty(difficulty());
         stageOption.setLives(3, 3);
         stageOption.setStars(0, 0);
+        stageOption.setTotalKills(0, 0);
         stageOption.setGame(game);
         stageOption.setMultiplayer(multiplayer);
         stageOption.setStage(1);
