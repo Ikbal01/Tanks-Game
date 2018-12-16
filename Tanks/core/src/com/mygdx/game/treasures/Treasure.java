@@ -1,5 +1,6 @@
 package com.mygdx.game.treasures;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.game.sprites.Bullet;
@@ -20,6 +21,7 @@ public abstract class Treasure extends GameObject {
     private SpriteBatch spriteBatch;
     private long startTime;
     private TreasureType type;
+    protected Sound sound;
 
     public Treasure(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, World.PIXELS_32, World.PIXELS_32);
@@ -49,6 +51,7 @@ public abstract class Treasure extends GameObject {
     @Override
     public void respondTankCollision(Tank tank) {
         currentState = State.USED;
+        sound.play();
     }
 
     @Override

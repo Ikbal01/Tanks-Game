@@ -11,5 +11,7 @@ public class BaseDefender extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\baseDefence.png")));
         setType(TreasureType.BASE_DEFENDER);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\treasure.wav"));
     }
 }

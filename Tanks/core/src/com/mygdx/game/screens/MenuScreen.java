@@ -3,6 +3,7 @@ package com.mygdx.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -10,21 +11,15 @@ import com.mygdx.game.Tanks;
 import com.mygdx.game.world.StageOption;
 
 public class MenuScreen extends ScreenAdapter {
-    public enum Difficulty {EASY(1, 3), NORMAL(2, 6), HARD(3, 9);
+    public enum Difficulty {EASY(1), NORMAL(2), HARD(3);
         private int index;
-        private int enemyCount;
 
-        private Difficulty(int index, int enemyCount) {
+        private Difficulty(int index) {
             this.index = index;
-            this.enemyCount = enemyCount;
         }
 
         public int getIndex() {
             return index;
-        }
-
-        public int getEnemyCount() {
-            return enemyCount;
         }
     }
 
@@ -38,6 +33,8 @@ public class MenuScreen extends ScreenAdapter {
     private boolean selected;
     private boolean multiplayer;
 
+    private Sound menuSound;
+
     public MenuScreen(Tanks game) {
         this.game = game;
 
@@ -50,6 +47,8 @@ public class MenuScreen extends ScreenAdapter {
 
         selected = false;
         multiplayer = false;
+
+        menuSound = Gdx.audio.newSound(Gdx.files.internal("sound\\menu.wav"));
     }
 
     public void update() {
@@ -59,8 +58,9 @@ public class MenuScreen extends ScreenAdapter {
     }
 
     private void handleInput() {
-        if (!selected) {
+        int prevIndex = index;
 
+        if (!selected) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 1) {
                 index++;
             } else if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && index > 0) {
@@ -83,8 +83,13 @@ public class MenuScreen extends ScreenAdapter {
                 }
             }
         }
+        if (prevIndex != index) {
+            menuSound.play();
+        }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+            menuSound.play();
+
             if (!selected) {
                 selected = true;
                 if (index == 0) {

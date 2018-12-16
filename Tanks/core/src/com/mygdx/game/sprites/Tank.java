@@ -1,6 +1,7 @@
 package com.mygdx.game.sprites;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -58,6 +59,8 @@ public abstract class Tank extends DynamicGameObject {
     private long explodingTimer;
     private long frozenTimer;
 
+    private Sound deadSound;
+    private Sound moveSound;
 
     public Tank(float x, float y, World world) {
         super(x, y, TANK_WIDTH, TANK_HEIGHT);
@@ -71,6 +74,9 @@ public abstract class Tank extends DynamicGameObject {
         direction = Direction.UP;
 
         previousPosition = new Vector2(getPosition());
+
+        deadSound = Gdx.audio.newSound(Gdx.files.internal("sound\\dead.wav"));
+        moveSound = Gdx.audio.newSound(Gdx.files.internal("sound\\move.wav"));
 
         setSpawningState();
     }
@@ -95,16 +101,13 @@ public abstract class Tank extends DynamicGameObject {
                         state = State.NORMAL;
                     }
                 }
-                updateBullet();
                 break;
 
-            case NORMAL:
-                updateBullet();
-                break;
             case FROZEN:
                 if (FROZEN_TIME < (System.currentTimeMillis() - frozenTimer) / 1000.0) {
                     setNormalState();
                 }
+
                 break;
 
             case EXPLODING:
@@ -112,9 +115,9 @@ public abstract class Tank extends DynamicGameObject {
                     setDestroyedState();
                     break;
                 }
-                updateBullet();
                 break;
         }
+        updateBullet();
     }
 
     protected void updateAnimation() {
@@ -166,42 +169,48 @@ public abstract class Tank extends DynamicGameObject {
     }
 
     public void stop() {
-        frozenTimer = System.currentTimeMillis();
-        setState(State.FROZEN);
+        if (state != State.SUPER_TANK) {
+
+            state = State.FROZEN;
+            if (bullets.size > 0) {
+                bullets.get(0).explode();
+            }
+            frozenTimer = System.currentTimeMillis();
+        }
     }
 
     public void move(Direction direction) {
-        if (state == State.FROZEN) {
-            return;
-        }
 
-        if ((this.direction == Direction.LEFT || this.direction == Direction.RIGHT)
-                && (direction == Direction.DOWN || direction == Direction.UP)) {
+        if (state != State.FROZEN && world.getState() != World.State.PAUSE) {
 
-            setVerticalRail();
-        }
+            if ((this.direction == Direction.LEFT || this.direction == Direction.RIGHT)
+                    && (direction == Direction.DOWN || direction == Direction.UP)) {
 
-        if ((this.direction == Direction.UP || this.direction == Direction.DOWN)
-                && (direction == Direction.LEFT || direction == Direction.RIGHT)) {
+                setVerticalRail();
+            }
 
-            setHorizontalRail();
-        }
+            if ((this.direction == Direction.UP || this.direction == Direction.DOWN)
+                    && (direction == Direction.LEFT || direction == Direction.RIGHT)) {
 
-        previousPosition.set(getPosition());
+                setHorizontalRail();
+            }
 
-        switch (direction) {
-            case UP:
-                moveUp();
-                break;
-            case DOWN:
-                moveDown();
-                break;
-            case LEFT:
-                moveLeft();
-                break;
-            case RIGHT:
-                moveRight();
-                break;
+            previousPosition.set(getPosition());
+
+            switch (direction) {
+                case UP:
+                    moveUp();
+                    break;
+                case DOWN:
+                    moveDown();
+                    break;
+                case LEFT:
+                    moveLeft();
+                    break;
+                case RIGHT:
+                    moveRight();
+                    break;
+            }
         }
     }
 
@@ -288,6 +297,8 @@ public abstract class Tank extends DynamicGameObject {
 
     @Override
     public void explode() {
+        deadSound.play();
+
         explodingTimer = System.currentTimeMillis();
         setState(State.EXPLODING);
 
@@ -317,16 +328,18 @@ public abstract class Tank extends DynamicGameObject {
         return muzzPosition;
     }
 
+    protected void goBack() {
+        position.set(previousPosition.x, previousPosition.y);
+        bounds.setX(previousPosition.x);
+        bounds.setY(previousPosition.y);
+    }
+
     public Bullet getBullet() {
         return bullets.size > 0 ? bullets.get(0) : null;
     }
 
     public Array<Bullet> getBullets() {
         return bullets;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
     }
 
     public Tank.State getState() {
@@ -337,11 +350,6 @@ public abstract class Tank extends DynamicGameObject {
         state = State.SPAWNING;
         setSpawningAnimation();
         spawningTimer = System.currentTimeMillis();
-    }
-
-    public void setFrozenState() {
-        state = State.FROZEN;
-        frozenTimer = System.currentTimeMillis();
     }
 
     public void setNormalState() {

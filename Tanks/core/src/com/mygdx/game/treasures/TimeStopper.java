@@ -11,5 +11,7 @@ public class TimeStopper extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\stopTime.png")));
         setType(TreasureType.TIME_STOPPER);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\stop.wav"));
     }
 }

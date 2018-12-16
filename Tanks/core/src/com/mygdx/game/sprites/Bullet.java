@@ -1,6 +1,7 @@
 package com.mygdx.game.sprites;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -32,6 +33,8 @@ public class Bullet extends DynamicGameObject {
 
     private long elapsed;
 
+    private Sound wallCollSound;
+
     public Bullet(float x, float y, Tank tank, Direction direction, SpriteBatch spriteBatch, float velocity) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
 
@@ -44,6 +47,8 @@ public class Bullet extends DynamicGameObject {
 
         setTexture();
         currentFrame = new TextureRegion(texture, 8, 8);
+
+        wallCollSound = Gdx.audio.newSound(Gdx.files.internal("sound\\wallColl.wav"));
     }
 
     @Override
@@ -79,7 +84,18 @@ public class Bullet extends DynamicGameObject {
     @Override
     public void explode() {
         if (explosionAnimation == null) {
+            velocity = 4;
+            for (int i = 0; i < 3; i++) {
+                move();
+            }
+
+            if (tank instanceof Hero) {
+                wallCollSound.play();
+            }
+
+            setBigBounds();
             setExplosionAnimation();
+
             state = State.EXPLODING;
             elapsed = System.currentTimeMillis();
         }
@@ -171,24 +187,17 @@ public class Bullet extends DynamicGameObject {
 
     @Override
     public void respondWallCollision() {
-        if (state != State.FLYING) {
-            return;
-        }
+        if (state == State.FLYING) {
 
-        velocity = 4;
-        for (int i = 0; i < 3; i++) {
-            move();
+            explode();
         }
-
-        setBigBounds();
-        explode();
     }
 
     @Override
     public void respondTankCollision(Tank tank) {
-        if (tank.state != Tank.State.SPAWNING) {
+        if (tank.state != Tank.State.SPAWNING && tank != this.tank) {
             if (!(tank instanceof Enemy && this.tank instanceof Enemy)) {
-                respondWallCollision();
+                explode();
             }
         }
     }

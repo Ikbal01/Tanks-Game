@@ -41,9 +41,7 @@ public class CollisionSystem {
             verifyStaticObjectsCollision(tank);
             verifyTanksCollision(tank);
 
-            Bullet bullet = tank.getBullet();
-
-            if (bullet != null) {
+            for (Bullet bullet : tank.getBullets()) {
                 verifyMapBoundsCollision(bullet);
                 verifyStaticObjectsCollision(bullet);
                 verifyTanksCollision(bullet);
@@ -75,7 +73,9 @@ public class CollisionSystem {
     }
 
     private void verifyTreasureCollision(Hero hero) {
-        if (treasure != null && hero.getBounds().overlaps(treasure.getBounds())) {
+        if (treasure != null && treasure.getState() == Treasure.State.ACTIVE
+                && hero.getBounds().overlaps(treasure.getBounds())) {
+
             switch (treasure.getType()) {
                 case ENEMY_KILLER:
                     world.killEnemies();
@@ -117,6 +117,7 @@ public class CollisionSystem {
 
                 if (dynamicGameObject instanceof Bullet) {
                     tank.respondBulletCollision((Bullet) dynamicGameObject);
+
                 } else {
                     tank.respondTankCollision((Tank) dynamicGameObject);
                 }
@@ -128,7 +129,9 @@ public class CollisionSystem {
 
     private void verifyStaticObjectsCollision(Tank tank) {
         for (GameObject statGameObj : staticGameObjects) {
+
             if (tank.getBounds().overlaps(statGameObj.getBounds())) {
+
                 statGameObj.respondTankCollision(tank);
                 tank.respondWallCollision();
                 break;
@@ -154,6 +157,7 @@ public class CollisionSystem {
         if (bulletCollidesWithStaticObjs(bullet)) {
 
             for (GameObject statGameObj : staticGameObjects) {
+
                 if (bullet.getBigBounds().overlaps(statGameObj.getBounds())) {
                     statGameObj.respondBulletCollision(bullet);
                 }
@@ -165,7 +169,8 @@ public class CollisionSystem {
     private boolean bulletCollidesWithStaticObjs(Bullet bullet) {
         if (bullet.getState() == Bullet.State.FLYING) {
             for (GameObject statGameObj : staticGameObjects) {
-                if (bullet.getBounds().overlaps(statGameObj.getBounds())) {
+
+                if (!(statGameObj instanceof Water) && bullet.getBounds().overlaps(statGameObj.getBounds())) {
                     return true;
                 }
             }

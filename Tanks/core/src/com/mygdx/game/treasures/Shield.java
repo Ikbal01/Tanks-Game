@@ -11,5 +11,8 @@ public class Shield extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\shieldd.png")));
         setType(TreasureType.SHIELD);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\shield.wav"));
+
     }
 }

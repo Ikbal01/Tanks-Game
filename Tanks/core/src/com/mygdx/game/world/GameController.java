@@ -32,6 +32,19 @@ public class GameController {
         }
 
         handlePauseMenuButtonInput();
+        hangleTankModInput();
+    }
+
+    private void hangleTankModInput() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_9)) {
+            player1.setSuperTankMod();
+            player2.setSuperTankMod();
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0)) {
+            player1.setNormalMod();
+            player2.setNormalMod();
+        }
     }
 
     private void handlePauseMenuButtonInput() {

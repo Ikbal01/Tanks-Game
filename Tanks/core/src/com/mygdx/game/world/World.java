@@ -1,6 +1,7 @@
 package com.mygdx.game.world;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.MapObject;
@@ -44,13 +45,16 @@ public class World {
     private static final int FORTRESS_INIT_POS_X = 208;
     private static final int FORTRESS_INIT_POS_Y = 16;
 
-    private static final int NEW_TREASURE_TIME = 17;
-    private static final int NEW_ENEMIES_GENERATE_TIME = 20;
+    private static final int NEW_TREASURE_TIME = 15;
+    private static final int NEW_ENEMIES_GENERATE_TIME = 18;
+    private static final int MUSIC_TIME = 56;
+    private static final float GAME_OVER_TIME = 7f;
 
     public enum State {NORMAL, PAUSE, GAME_OVER, NEXT_LEVEL}
     private State state;
 
     public static Texture items;
+    private Texture pause;
 
     private TmxMapLoader mapLoader;
     private TiledMap map;
@@ -66,7 +70,6 @@ public class World {
     private int[] lives;
     private int[] stars;
     private int[] kills;
-    private int stageEnemyCount;
 
     private Hero player1;
     private Hero player2;
@@ -82,11 +85,16 @@ public class World {
 
     private long treasureTimer;
     private long newEnemiesTimer;
+    private long musicTimer;
+    private long gameOverTimer;
 
+    private int stageEnemyCount;
     private int destroyedEnemyCount;
     private int createdEnemyCount;
 
     private Random random;
+
+    private Sound music;
 
     public World(StageOption stageOption) {
 
@@ -99,11 +107,12 @@ public class World {
         this.lives = stageOption.getLives();
         this.stars = stageOption.getStars();
         this.kills = stageOption.getTotalKills();
-
-        random = new Random();
         state = State.NORMAL;
 
+        random = new Random();
+
         items = new Texture(Gdx.files.internal("BattleTanksSheetTransparent.png"));
+        pause = new Texture(Gdx.files.internal("gameOver\\pause.png"));
         destroyedEnemyCount = 0;
         createdEnemyCount = 0;
         calculateStageMaxEnemyCount();
@@ -129,12 +138,14 @@ public class World {
 
         treasureTimer = System.currentTimeMillis();
         newEnemiesTimer = System.currentTimeMillis();
+        gameOverTimer = System.currentTimeMillis();
 
+        musicTimer = System.currentTimeMillis();
+        music = Gdx.audio.newSound(Gdx.files.internal("sound\\NES Boss.mp3"));
+        music.play(0.3f);
     }
 
     public void update() {
-
-        System.out.println(state);
 
         switch (state) {
             case NORMAL:
@@ -168,9 +179,28 @@ public class World {
                 break;
 
             case GAME_OVER:
-                game.setScreen(new GameOverScreen(game));
+                music.stop();
+
+                if (GAME_OVER_TIME < (System.currentTimeMillis() - gameOverTimer) / 1000.0) {
+                    int player1Kills = player1.getKills();
+                    int player2Kills = 0;
+                    if (isMultiplayer) {
+                        player2Kills = player2.getKills();
+                    }
+                    game.setScreen(new GameOverScreen(game, new int[] {player1Kills, player2Kills}, isMultiplayer));
+                }
+
+                collisionSystem.update();
+
+                for (int i = 0; i < tanks.size; i++) {
+                    tanks.get(i).update();
+                }
+                fortress.update();
+
                 break;
         }
+
+        updateMusic();
     }
 
     private void removeDestroyedTanks() {
@@ -196,6 +226,13 @@ public class World {
             if (object.isDestroyed()) {
                 iterator.remove();
             }
+        }
+    }
+
+    private void updateMusic() {
+        if (MUSIC_TIME < (System.currentTimeMillis() - musicTimer) / 1000.0) {
+            music.play(0.3f);
+            musicTimer = System.currentTimeMillis();
         }
     }
 
@@ -249,7 +286,7 @@ public class World {
 
     private void generateEnemies() {
         if (NEW_ENEMIES_GENERATE_TIME < ((System.currentTimeMillis() - newEnemiesTimer) / 1000.0)
-                && createdEnemyCount < stageEnemyCount) {
+                && createdEnemyCount < stageEnemyCount && tanks.size < 12) {
 
             tanks.add(new Enemy(Enemies_SPAWNING_POS_1_X, Enemies_SPAWNING_POS_Y, this));
             tanks.add(new Enemy(Enemies_SPAWNING_POS_2_X, Enemies_SPAWNING_POS_Y, this));
@@ -329,6 +366,10 @@ public class World {
         }
 
         fortress.draw();
+
+        if (state == State.PAUSE) {
+            spriteBatch.draw(pause, 16, 16, 416, 416);
+        }
     }
 
     public void killEnemies() {
@@ -413,5 +454,13 @@ public class World {
 
     public State getState() {
         return state;
+    }
+
+    public int getStageEnemyCount() {
+        return stageEnemyCount;
+    }
+
+    public int getDestroyedEnemyCount() {
+        return destroyedEnemyCount;
     }
 }

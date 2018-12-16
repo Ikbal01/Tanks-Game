@@ -8,11 +8,15 @@ import com.mygdx.game.world.World;
 import java.util.Random;
 
 public class Enemy extends Tank {
-    private static final float DIRECTION_CHANGE_TIME = 3f;
+    private static final float CORR_DIRECTION_CHANGE_TIME = 3f;
+    private static final float RANDOM_DIRECTION_CHANGE_TIME = 4.5f;
+    private static final float COLLISION_WAIT_TIME = 0.2f;
     private static final float FIRE_TIME = 1f;
 
     private Random random;
     private long directionTimer;
+    private long randomDirectionTimer;
+    private long collisionWaitTimer;
     private long fireTimer;
 
     public Enemy(float x, float y, World world) {
@@ -35,6 +39,8 @@ public class Enemy extends Tank {
         currAnimation = downMoveAnimation;
 
         directionTimer = System.currentTimeMillis();
+        randomDirectionTimer = System.currentTimeMillis();
+        collisionWaitTimer = System.currentTimeMillis();
         fireTimer = System.currentTimeMillis();
     }
 
@@ -47,11 +53,20 @@ public class Enemy extends Tank {
             case SPAWNING:
             case NORMAL:
 
-                move(direction);
-                if (DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - directionTimer) / 1000.0)) {
+                if (COLLISION_WAIT_TIME < (System.currentTimeMillis() - collisionWaitTimer) / 1000.0) {
+                    move(direction);
+                }
+
+                if (CORR_DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - directionTimer) / 1000.0)) {
                     moveRandomCorridor();
                     directionTimer = System.currentTimeMillis();
                 }
+                if (RANDOM_DIRECTION_CHANGE_TIME < (System.currentTimeMillis() - randomDirectionTimer) / 1000.0) {
+                    changeDirection();
+
+                    randomDirectionTimer = System.currentTimeMillis();
+                }
+
                 if (FIRE_TIME < ((System.currentTimeMillis() - fireTimer) / 1000.0)) {
                     fire();
                     fireTimer = System.currentTimeMillis();
@@ -110,24 +125,25 @@ public class Enemy extends Tank {
                 direction = Direction.RIGHT;
                 break;
         }
-    }
-
-    @Override
-    public void respondWallCollision() {
-        position.set(previousPosition.x, previousPosition.y);
-        bounds.setX(previousPosition.x);
-        bounds.setY(previousPosition.y);
-
-        changeDirection();
 
         setVerticalRail();
         setHorizontalRail();
     }
 
     @Override
+    public void respondWallCollision() {
+        goBack();
+        collisionWaitTimer = System.currentTimeMillis();
+        changeDirection();
+    }
+
+    @Override
     public void respondTankCollision(Tank tank) {
         if (tank.state != State.SPAWNING && state != State.SPAWNING) {
-            respondWallCollision();
+            goBack();
+            collisionWaitTimer = System.currentTimeMillis();
+
+            changeDirection();
         }
     }
 
@@ -146,6 +162,5 @@ public class Enemy extends Tank {
                 explode();
             }
         }
-
     }
 }

@@ -11,5 +11,7 @@ public class WallBreaker extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\wallBreaker.png")));
         setType(TreasureType.WALL_BREAKER);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\wallBreaker.wav"));
     }
 }

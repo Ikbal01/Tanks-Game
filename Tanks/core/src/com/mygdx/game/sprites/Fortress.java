@@ -1,6 +1,7 @@
 package com.mygdx.game.sprites;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.mygdx.game.world.World;
 
@@ -21,6 +22,8 @@ public class Fortress extends GameObject {
     private long timer;
     private Texture deadTexture;
 
+    private Sound destrSound;
+
     public Fortress(float x, float y, World world) {
         super(x, y, World.PIXELS_32, World.PIXELS_32);
         this.x = x;
@@ -29,6 +32,8 @@ public class Fortress extends GameObject {
 
         state = State.NORMAL;
         deadTexture = new Texture(Gdx.files.internal("fortress\\dead.png"));
+
+        destrSound = Gdx.audio.newSound(Gdx.files.internal("sound\\fortressDestr.wav"));
     }
 
     public void update() {
@@ -71,6 +76,8 @@ public class Fortress extends GameObject {
         if (state != State.DEFENCE && bullet.getState() == Bullet.State.FLYING
                 && bullet.getBounds().overlaps(this.bounds)) {
 
+            state = State.DEAD;
+            destrSound.play();
             world.setGameOverState();
         }
     }

@@ -1,5 +1,7 @@
 package com.mygdx.game.sprites;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.enums.Color;
 import com.mygdx.game.enums.TankCategory;
@@ -21,6 +23,8 @@ public class Hero extends Tank{
     private long wallBreakingTimer;
     private long shieldTimer;
 
+    private Sound fireSound;
+
     public Hero(float x, float y, World world, int lives, int stars, int kills) {
         super(x, y, world);
 
@@ -35,6 +39,8 @@ public class Hero extends Tank{
         updateAnimation();
 
         currAnimation = upMoveAnimation;
+
+        fireSound = Gdx.audio.newSound(Gdx.files.internal("sound\\fire.wav"));
     }
 
     @Override
@@ -84,9 +90,14 @@ public class Hero extends Tank{
     @Override
     public void fire() {
         if (getState() != State.SUPER_TANK) {
+            if (bullets.size == 0) {
+                fireSound.play();
+            }
             super.fire();
         } else {
-            bullets.add(new Bullet(muzzle.x, muzzle.y, this, direction, spriteBatch, bulletVelocity));
+            fireSound.play();
+            bullets.add(new Bullet(getMuzzle().x, getMuzzle().y,
+                    this, direction, spriteBatch, bulletVelocity));
         }
     }
 
@@ -104,10 +115,12 @@ public class Hero extends Tank{
     }
 
     public void improve() {
-        stars++;
+        if (state != State.SUPER_TANK) {
+            stars++;
 
-        updateTankSpecif();
-        updateAnimation();
+            updateTankSpecif();
+            updateAnimation();
+        }
     }
 
     private void respawn() {
@@ -124,21 +137,21 @@ public class Hero extends Tank{
 
     @Override
     public void respondWallCollision() {
-        position.set(previousPosition.x, previousPosition.y);
-        bounds.setX(previousPosition.x);
-        bounds.setY(previousPosition.y);
+        goBack();
     }
 
     @Override
     public void respondTankCollision(Tank tank) {
         if (tank.state != State.SPAWNING && state != State.SPAWNING) {
-            respondWallCollision();
+            goBack();
         }
     }
 
     @Override
     public void respondBulletCollision(Bullet bullet) {
-        if (state == State.SPAWNING || bullet.getState() != Bullet.State.FLYING) {
+        if (state == State.SPAWNING || bullet.getState() != Bullet.State.FLYING
+                || bullet.getTank() == this) {
+
             return;
         }
 
@@ -157,31 +170,42 @@ public class Hero extends Tank{
     }
 
     public void setShieldMod() {
-        setState(State.SHIELD);
+        if (state != State.SUPER_TANK) {
+            setState(State.SHIELD);
 
-        shieldTimer = System.currentTimeMillis();
+            shieldTimer = System.currentTimeMillis();
+        }
     }
 
     public void setWallBreakingMod() {
-        setState(State.WALL_BREAKING);
-        wallBreakingTimer = System.currentTimeMillis();
+        if (state != State.SUPER_TANK) {
+            setState(State.WALL_BREAKING);
+            wallBreakingTimer = System.currentTimeMillis();
+        }
     }
 
     public void setNormalMod() {
-        setState(State.NORMAL);
-        updateTankSpecif();
-        updateAnimation();
+        if (state != State.DESTROYED) {
+
+            setState(State.NORMAL);
+            updateTankSpecif();
+            updateAnimation();
+            currAnimation = upMoveAnimation;
+        }
     }
 
     public void setSuperTankMod() {
-        setState(State.SUPER_TANK);
+        if (state != State.DESTROYED) {
 
-        category = TankCategory.values()[7];
-        armour = 10;
-        bulletVelocity = 8;
-        velocity = 2.2f;
+            setState(State.SUPER_TANK);
 
-        updateAnimation();
+            category = TankCategory.values()[7];
+            updateAnimation();
+            currAnimation = upMoveAnimation;
+            armour = 10;
+            bulletVelocity = 8;
+            velocity = 2.2f;
+        }
     }
 
     public Array<Bullet> getBullets() {

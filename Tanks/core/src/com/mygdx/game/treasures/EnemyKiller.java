@@ -11,5 +11,7 @@ public class EnemyKiller extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\killEnemy.png")));
         setType(TreasureType.ENEMY_KILLER);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\treasure.wav"));
     }
 }

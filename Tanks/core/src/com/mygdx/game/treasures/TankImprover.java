@@ -13,5 +13,7 @@ public class TankImprover extends Treasure {
 
         setTexture(new Texture(Gdx.files.internal("treasures\\improve.png")));
         setType(TreasureType.TANK_IMPROVER);
+
+        sound = Gdx.audio.newSound(Gdx.files.internal("sound\\star.wav"));
     }
 }
