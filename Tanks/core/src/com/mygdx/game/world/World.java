@@ -21,6 +21,9 @@ import com.mygdx.game.treasures.*;
 import java.util.Iterator;
 import java.util.Random;
 
+/**
+ * Represents the game world consisting of all entities and handles the interaction among them.
+ */
 public class World {
     public static final int WORLD_WIDTH = 512;
     public static final int WORLD_HEIGHT = 448;
@@ -31,6 +34,7 @@ public class World {
     public static final int CELL_SIZE = 8;
 
     public static final int PIXELS_32 = 32;
+    private static final float MILLISECONDS_DELIMITER = 1000.0f;
 
     private static final int PLAYER_1_SPAWNING_POS_X = 160;
     private static final int PLAYER_1_SPAWNING_POS_Y = 16;
@@ -48,9 +52,10 @@ public class World {
     private static final int NEW_TREASURE_TIME = 15;
     private static final int NEW_ENEMIES_GENERATE_TIME = 18;
     private static final int MUSIC_TIME = 56;
-    private static final float GAME_OVER_TIME = 7f;
+    private static final float GAME_OVER_TIME = 2f;
+    private static final float NEXT_LEVEL_TIME = 2f;
 
-    public enum State {NORMAL, PAUSE, GAME_OVER, NEXT_LEVEL}
+    public enum State {NORMAL, PAUSE, NEXT_LEVEL, GAME_OVER}
     private State state;
 
     public static Texture items;
@@ -87,6 +92,7 @@ public class World {
     private long newEnemiesTimer;
     private long musicTimer;
     private long gameOverTimer;
+    private long nextLevelTimer;
 
     private int stageEnemyCount;
     private int destroyedEnemyCount;
@@ -136,9 +142,10 @@ public class World {
         collisionSystem = new CollisionSystem(this);
         gameController = new GameController(this);
 
-        treasureTimer = System.currentTimeMillis();
-        newEnemiesTimer = System.currentTimeMillis();
-        gameOverTimer = System.currentTimeMillis();
+        long currTime = System.currentTimeMillis();
+        treasureTimer = currTime;
+        newEnemiesTimer = currTime;
+        gameOverTimer = currTime;
 
         musicTimer = System.currentTimeMillis();
         music = Gdx.audio.newSound(Gdx.files.internal("sound\\NES Boss.mp3"));
@@ -150,8 +157,9 @@ public class World {
         switch (state) {
             case NORMAL:
 
-                if (stageEnemyCount == destroyedEnemyCount) {
+                if (stageEnemyCount == destroyedEnemyCount || (player1.isDestroyed() && player2.isDestroyed())) {
                     state = State.NEXT_LEVEL;
+                    nextLevelTimer = System.currentTimeMillis();
                 }
 
                 removeDestroyedTanks();
@@ -174,20 +182,28 @@ public class World {
                 break;
 
             case NEXT_LEVEL:
-                StageOption stageOption = generateStageOption();
-                game.setScreen(new StageScreen(stageOption));
+                music.stop();
+
+                if (isElapsed(NEXT_LEVEL_TIME, nextLevelTimer)) {
+
+                    if (stage == 6) {
+                        game.setScreen(new GameOverScreen(game, new int[] {player1.getKills(),
+                                player2.getKills()}, true));
+                    } else {
+
+                        StageOption stageOption = generateStageOption();
+                        game.setScreen(new StageScreen(stageOption));
+                    }
+                }
                 break;
 
             case GAME_OVER:
                 music.stop();
 
-                if (GAME_OVER_TIME < (System.currentTimeMillis() - gameOverTimer) / 1000.0) {
-                    int player1Kills = player1.getKills();
-                    int player2Kills = 0;
-                    if (isMultiplayer) {
-                        player2Kills = player2.getKills();
-                    }
-                    game.setScreen(new GameOverScreen(game, new int[] {player1Kills, player2Kills}, isMultiplayer));
+                if (isElapsed(GAME_OVER_TIME, gameOverTimer)) {
+
+                    game.setScreen(new GameOverScreen(game, new int[] { player1.getKills(),
+                            player2.getKills()}, false));
                 }
 
                 collisionSystem.update();
@@ -230,14 +246,14 @@ public class World {
     }
 
     private void updateMusic() {
-        if (MUSIC_TIME < (System.currentTimeMillis() - musicTimer) / 1000.0) {
+        if (isElapsed(MUSIC_TIME, musicTimer)) {
             music.play(0.3f);
             musicTimer = System.currentTimeMillis();
         }
     }
 
     private void updateTreasure() {
-        if (NEW_TREASURE_TIME < ((System.currentTimeMillis() - treasureTimer) / 1000.0)) {
+        if (isElapsed(NEW_TREASURE_TIME, treasureTimer)) {
             generateTreasure();
             treasureTimer = System.currentTimeMillis();
         }
@@ -261,7 +277,7 @@ public class World {
         tanks.add(player2);
 
         if (!stageOption.isMultiplayer()) {
-            player2.setState(Tank.State.DESTROYED);
+            player2.setDestroyedState();
         }
 
     }
@@ -285,7 +301,7 @@ public class World {
     }
 
     private void generateEnemies() {
-        if (NEW_ENEMIES_GENERATE_TIME < ((System.currentTimeMillis() - newEnemiesTimer) / 1000.0)
+        if (isElapsed(NEW_ENEMIES_GENERATE_TIME, newEnemiesTimer)
                 && createdEnemyCount < stageEnemyCount && tanks.size < 12) {
 
             tanks.add(new Enemy(Enemies_SPAWNING_POS_1_X, Enemies_SPAWNING_POS_Y, this));
@@ -372,6 +388,20 @@ public class World {
         }
     }
 
+    /**
+     * Checks whether a specified time has elapsed from the start of timer.
+     *
+     * @param totalTime time to be checked
+     * @param startTime start of timer
+     * @return true if the given time is elapsed, false otherwise
+     */
+    protected boolean isElapsed(float totalTime, long startTime) {
+
+        float elapsed = (System.currentTimeMillis() - startTime) / MILLISECONDS_DELIMITER;
+
+        return totalTime < elapsed;
+    }
+
     public void killEnemies() {
         for (Tank tank : tanks) {
             if (tank instanceof Enemy) {
@@ -383,12 +413,13 @@ public class World {
     public void stopTime() {
         for (Tank tank : tanks) {
             if (tank instanceof Enemy) {
-                ((Enemy) tank).stop();
+                tank.stop();
             }
         }
     }
 
     public void setGameOverState() {
+        gameOverTimer = System.currentTimeMillis();
         state = State.GAME_OVER;
     }
 
@@ -462,5 +493,9 @@ public class World {
 
     public int getDestroyedEnemyCount() {
         return destroyedEnemyCount;
+    }
+
+    public Sound getMusic() {
+        return music;
     }
 }

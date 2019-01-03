@@ -5,40 +5,55 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.mygdx.game.world.World;
 
+/**
+ * The fortress holds an eagle that must be protected by the players.
+ */
 public class Fortress extends GameObject {
+    private static final int FORTRESS_WIDTH = 32;
+    private static final int FORTRESS_HEIGHT = 32;
+
+    // Defence state position coordinates
     private static final int FORTRESS_DEFENCE_POS_X = 192;
     private static final int FORTRESS_DEFENCE_POS_Y = 16;
+
+    // Defence state sizes
     private static final int FORTRESS_DEFENCE_WIDTH = 64;
     private static final int FORTRESS_DEFENCE_HEIGHT = 48;
+
     private static final int FORTRESS_DEFENCE_TIME = 15;
 
     public enum State {NORMAL, DEFENCE, DEAD}
     private State state;
 
     private World world;
+
+    // Normal state position coordinates
     private float x;
     private float y;
 
     private long timer;
-    private Texture deadTexture;
 
-    private Sound destrSound;
+    private Texture deadTexture;
+    private Sound explosionSound;
 
     public Fortress(float x, float y, World world) {
-        super(x, y, World.PIXELS_32, World.PIXELS_32);
+        super(x, y, FORTRESS_WIDTH, FORTRESS_HEIGHT);
+        this.world = world;
         this.x = x;
         this.y = y;
-        this.world = world;
 
         state = State.NORMAL;
-        deadTexture = new Texture(Gdx.files.internal("fortress\\dead.png"));
 
-        destrSound = Gdx.audio.newSound(Gdx.files.internal("sound\\fortressDestr.wav"));
+        deadTexture = new Texture(Gdx.files.internal("fortress\\dead.png"));
+        explosionSound = Gdx.audio.newSound(Gdx.files.internal("sound\\fortressDestr.wav"));
     }
 
+    /**
+     * Checks whether defence mod time is elapsed.
+     * If is elapsed sets normal mod.
+     */
     public void update() {
-        if (state == State.DEFENCE
-                && FORTRESS_DEFENCE_TIME < (System.currentTimeMillis() - timer) / 1000) {
+        if (state == State.DEFENCE && isElapsed(FORTRESS_DEFENCE_TIME, timer)) {
 
             setNormalMode();
         }
@@ -46,11 +61,14 @@ public class Fortress extends GameObject {
 
     public void draw() {
         if (state == State.DEAD) {
-            world.getSpriteBatch().draw(deadTexture, x, y, World.PIXELS_32, World.PIXELS_32);
+            world.getSpriteBatch().draw(deadTexture, x, y, FORTRESS_WIDTH, FORTRESS_HEIGHT);
         }
     }
 
-    public void setDefenceMod() {
+    /**
+     * Becomes invulnerable with broader boundaries.
+     */
+    public void setDefenceMode() {
         state = State.DEFENCE;
 
         position.set(FORTRESS_DEFENCE_POS_X, FORTRESS_DEFENCE_POS_Y);
@@ -60,10 +78,14 @@ public class Fortress extends GameObject {
         timer = System.currentTimeMillis();
     }
 
+    /**
+     * Becomes vulnerable with normal boundaries
+     */
     public void setNormalMode() {
-        position.set(x, y);
-        bounds.set(x, y, World.PIXELS_32, World.PIXELS_32);
         state = State.NORMAL;
+
+        position.set(x, y);
+        bounds.set(x, y, FORTRESS_WIDTH, FORTRESS_HEIGHT);
     }
 
     @Override
@@ -77,7 +99,7 @@ public class Fortress extends GameObject {
                 && bullet.getBounds().overlaps(this.bounds)) {
 
             state = State.DEAD;
-            destrSound.play();
+            explosionSound.play();
             world.setGameOverState();
         }
     }

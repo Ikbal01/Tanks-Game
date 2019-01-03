@@ -9,8 +9,10 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.mygdx.game.Tanks;
 import com.mygdx.game.world.StageOption;
 
+
 public class StageScreen extends ScreenAdapter {
-    private static final float STAGE_DURATION = 0.8f;
+    private static final float STAGE_SCREEN_DURATION = 0.8f;
+    private static final float MILLISECONDS_DELIMITER = 1000.0f;
 
     private Tanks game;
     private StageOption stageOption;
@@ -26,7 +28,7 @@ public class StageScreen extends ScreenAdapter {
         this.game = stageOption.getGame();
 
         camera = new OrthographicCamera(Tanks.DESKTOP_SCREEN_WIDTH, Tanks.DESKTOP_SCREEN_HEIGHT);
-        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2, Tanks.DESKTOP_SCREEN_HEIGHT / 2, 0);
+        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2f, Tanks.DESKTOP_SCREEN_HEIGHT / 2f, 0);
 
         font = new BitmapFont();
         stageTexture = new Texture(Gdx.files.internal("stages\\stage_" + stageOption.getStage() + ".png"));
@@ -35,7 +37,7 @@ public class StageScreen extends ScreenAdapter {
     }
 
     public void update() {
-        if (STAGE_DURATION < (System.currentTimeMillis() - timer) / 1000.0) {
+        if (STAGE_SCREEN_DURATION < (System.currentTimeMillis() - timer) / MILLISECONDS_DELIMITER) {
             game.setScreen(new BattleScreen(stageOption));
         }
 
@@ -65,14 +67,12 @@ public class StageScreen extends ScreenAdapter {
         int kills1 = stageOption.getTotalKills()[0];
         int lives1 = stageOption.getLives()[0];
 
-        font.getData().setScale(2, 2);
-        font.draw(game.spriteBatch,"Player 1\nkills: " + kills1 + "\nlives: " + lives1, 250, 300);
+        font.getData().setScale(2f, 2f);
+        font.draw(game.spriteBatch, kills1 + "\n" + lives1, 279, 228);
 
-        if (stageOption.isMultiplayer()) {
-            int kills2 = stageOption.getTotalKills()[1];
-            int lives2 = stageOption.getLives()[1];
-            font.draw(game.spriteBatch,"Player 2\nkills: " + kills2 + "\nlives: " + lives2, 500, 300);
-        }
+        int kills2 = stageOption.getTotalKills()[1];
+        int lives2 = stageOption.getLives()[1];
+        font.draw(game.spriteBatch, kills2 + "\n" + lives2, 644, 228);
     }
 
     @Override

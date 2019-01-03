@@ -4,6 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+/**
+ * Sets base defender texture.
+ */
 public class BaseDefender extends Treasure {
 
     public BaseDefender(float x, float y, SpriteBatch spriteBatch) {

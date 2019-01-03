@@ -2,9 +2,9 @@ package com.mygdx.game.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -13,19 +13,21 @@ import com.mygdx.game.sprites.Fortress;
 import com.mygdx.game.world.StageOption;
 import com.mygdx.game.world.World;
 
+/**
+ * Renders the world on screen.
+ */
 public class BattleScreen extends ScreenAdapter {
     private Tanks game;
     private OrthographicCamera camera;
     private Viewport viewport;
+
+    private Texture statusBar;
 
     private BitmapFont font;
 
     private World world;
 
     private float stateTime;
-
-    public int horizontalCellCount;
-    public int verticalCellCount;
 
     public BattleScreen(StageOption stageOption) {
 
@@ -37,10 +39,9 @@ public class BattleScreen extends ScreenAdapter {
 
         camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
-        horizontalCellCount = 26;
-        verticalCellCount = 26;
-
         world = new World(stageOption);
+
+        statusBar = new Texture(Gdx.files.internal("statusBar.png"));
     }
 
     public void update() {
@@ -69,6 +70,7 @@ public class BattleScreen extends ScreenAdapter {
 
         game.spriteBatch.begin();
 
+        game.spriteBatch.draw(statusBar, 432, 0, 80, 448);
         world.draw(stateTime);
 
         drawStatusBar();
@@ -80,24 +82,26 @@ public class BattleScreen extends ScreenAdapter {
         int kills1 = world.getPlayer1().getKills();
         int lives1 = world.getPlayer1().getLives();
 
-        font.getData().setScale(1.0f, 1.0f);
-        font.draw(game.spriteBatch,"Player 1\nkills: " + kills1 + "\nlives: " + lives1, 436, 420);
+        font.getData().setScale(1.1f, 1.1f);
+        font.draw(game.spriteBatch,kills1 + "\n" + lives1, 482, 412);
 
-        if (world.isMultiplayer()) {
-            int kills2 = world.getPlayer2().getKills();
-            int lives2 = world.getPlayer2().getLives();
+        int kills2 = world.getPlayer2().getKills();
+        int lives2 = world.getPlayer2().getLives();
 
-            font.draw(game.spriteBatch,"Player 2\nkills: " + kills2 + "\nlives: " + lives2, 436, 350);
-        }
+        font.draw(game.spriteBatch,kills2 + "\n" + lives2, 482, 351);
 
         int remainingEnemies = world.getStageEnemyCount() - world.getDestroyedEnemyCount();
-        font.getData().setScale(0.9f, 0.9f);
-
-        font.draw(game.spriteBatch, "Enemies: " + remainingEnemies, 436, 280);
+        font.draw(game.spriteBatch,  "" + remainingEnemies, 491, 310);
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height);
+    }
+
+    @Override
+    public void dispose() {
+        statusBar.dispose();
+        font.dispose();
     }
 }

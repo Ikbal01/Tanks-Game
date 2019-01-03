@@ -6,6 +6,7 @@ public enum  Color {
     GREEN(0, 8),
     YELLOW(0, 0);
 
+    // Coordinates from png file
     private int x;
     private int y;
 

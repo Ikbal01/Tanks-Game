@@ -10,12 +10,15 @@ public enum TankCategory {
     HEAVY(7, 3, 5.5f, 0.9f),
     HEAVY_HEAVY(3, 4, 6, 0.7f);
 
+    // Coordinate from png file
     private int row;
+
+    // Tank specifications
     private int armour;
     private float bulletSpeed;
     private float velocity;
 
-    private TankCategory(int row, int armour, float bulletSpeed, float velocity) {
+    TankCategory(int row, int armour, float bulletSpeed, float velocity) {
         this.row = row;
         this.armour = armour;
         this.bulletSpeed = bulletSpeed;

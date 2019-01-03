@@ -7,13 +7,21 @@ import com.mygdx.game.world.World;
 
 import java.util.Random;
 
+/**
+ * Enemy tanks.
+ */
 public class Enemy extends Tank {
+    // Direction changing interval in random corridor (multiple 32 pixels)
     private static final float CORR_DIRECTION_CHANGE_TIME = 3f;
+    // Direction changing interval
     private static final float RANDOM_DIRECTION_CHANGE_TIME = 4.5f;
+    // The waiting time in a collision
     private static final float COLLISION_WAIT_TIME = 0.2f;
+    // The minimum time for shooting
     private static final float FIRE_TIME = 1f;
 
     private Random random;
+
     private long directionTimer;
     private long randomDirectionTimer;
     private long collisionWaitTimer;
@@ -38,12 +46,17 @@ public class Enemy extends Tank {
         updateAnimation();
         currAnimation = downMoveAnimation;
 
-        directionTimer = System.currentTimeMillis();
-        randomDirectionTimer = System.currentTimeMillis();
-        collisionWaitTimer = System.currentTimeMillis();
-        fireTimer = System.currentTimeMillis();
+        long currTime = System.currentTimeMillis();
+        directionTimer = currTime;
+        randomDirectionTimer = currTime;
+        collisionWaitTimer = currTime;
+        fireTimer = currTime;
     }
 
+    /**
+     * Changes the specifications and the direction of
+     * the tank according to its status at that time
+     */
     @Override
     public void update() {
         super.update();
@@ -53,21 +66,21 @@ public class Enemy extends Tank {
             case SPAWNING:
             case NORMAL:
 
-                if (COLLISION_WAIT_TIME < (System.currentTimeMillis() - collisionWaitTimer) / 1000.0) {
+                if (isElapsed(COLLISION_WAIT_TIME, collisionWaitTimer)) {
                     move(direction);
                 }
 
-                if (CORR_DIRECTION_CHANGE_TIME < ((System.currentTimeMillis() - directionTimer) / 1000.0)) {
+                if (isElapsed(CORR_DIRECTION_CHANGE_TIME, directionTimer)) {
                     moveRandomCorridor();
                     directionTimer = System.currentTimeMillis();
                 }
-                if (RANDOM_DIRECTION_CHANGE_TIME < (System.currentTimeMillis() - randomDirectionTimer) / 1000.0) {
+                if (isElapsed(RANDOM_DIRECTION_CHANGE_TIME, randomDirectionTimer)) {
                     changeDirection();
 
                     randomDirectionTimer = System.currentTimeMillis();
                 }
 
-                if (FIRE_TIME < ((System.currentTimeMillis() - fireTimer) / 1000.0)) {
+                if (isElapsed(FIRE_TIME, fireTimer)) {
                     fire();
                     fireTimer = System.currentTimeMillis();
                 }
@@ -80,6 +93,10 @@ public class Enemy extends Tank {
         super.draw(deltaTime);
     }
 
+    /**
+     * Turns its direction of movement if it is near a corridor
+     * ((its position + 16 (status bar width)) % 32 < 4 (static game object width / 2))
+     */
     private void moveRandomCorridor() {
         int rand = random.nextInt(2) + 1;
 
@@ -109,8 +126,12 @@ public class Enemy extends Tank {
         }
     }
 
+    /**
+     * Changes the direction of movement in a random direction
+     */
     private void changeDirection() {
         int rand = random.nextInt(4) + 1;
+
         switch (rand) {
             case 1:
                 direction = Direction.UP;
@@ -130,21 +151,16 @@ public class Enemy extends Tank {
         setHorizontalRail();
     }
 
+    /**
+     * Returns to the previous position, waits for
+     * a while and changes its direction randomly.
+     */
     @Override
     public void respondWallCollision() {
         goBack();
-        collisionWaitTimer = System.currentTimeMillis();
         changeDirection();
-    }
 
-    @Override
-    public void respondTankCollision(Tank tank) {
-        if (tank.state != State.SPAWNING && state != State.SPAWNING) {
-            goBack();
-            collisionWaitTimer = System.currentTimeMillis();
-
-            changeDirection();
-        }
+        collisionWaitTimer = System.currentTimeMillis();
     }
 
     @Override
@@ -154,13 +170,35 @@ public class Enemy extends Tank {
         }
 
         if (bullet.getTank() instanceof Hero) {
-
             armour--;
+
+            color = Color.values()[random.nextInt(3)];
+            updateAnimation();
+
             if (armour == 0) {
                 Hero hero = (Hero)bullet.getTank();
                 hero.increaseKills();
+
                 explode();
             }
+        }
+    }
+
+    /**
+     * Returns to the previous position, waits for a while and changes
+     * its direction randomly if both tanks are not in state SPAWNING
+     *
+     * @param tank the tank which collides with the Enemy
+     */
+    @Override
+    public void respondTankCollision(Tank tank) {
+
+        if (tank.state != State.SPAWNING && state != State.SPAWNING) {
+
+            goBack();
+            changeDirection();
+
+            collisionWaitTimer = System.currentTimeMillis();
         }
     }
 }

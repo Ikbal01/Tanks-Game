@@ -1,40 +1,49 @@
 package com.mygdx.game.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.mygdx.game.Tanks;
-import com.mygdx.game.world.World;
 
+/**
+ * Renders the Game Over screen effects.
+ */
 public class GameOverScreen extends ScreenAdapter {
+    private static final float SCREEN_DURATION = 3.2f;
+    private static final float MILLISECONDS_DELIMITER = 1000.0f;
+
     private Tanks game;
-    private boolean isMultiplayer;
     private int[] totalKills;
+    private boolean isGameEnd;
 
     private OrthographicCamera camera;
+
     private Texture gameOverTexture;
+
     private BitmapFont font;
 
+    private long screenDurationTimer;
 
-    public GameOverScreen(Tanks game, int[] totalKills, boolean isMultiplayer) {
+    public GameOverScreen(Tanks game, int[] totalKills, boolean isGameEnd) {
         this.game = game;
         this.totalKills = totalKills;
-        this.isMultiplayer = isMultiplayer;
+        this.isGameEnd = isGameEnd;
 
         camera = new OrthographicCamera(Tanks.DESKTOP_SCREEN_WIDTH, Tanks.DESKTOP_SCREEN_HEIGHT);
-        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2, Tanks.DESKTOP_SCREEN_HEIGHT / 2, 0);
-
-        gameOverTexture = new Texture(Gdx.files.internal("gameOver\\gameOver.png"));
+        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2f, Tanks.DESKTOP_SCREEN_HEIGHT / 2f, 0);
 
         font = new BitmapFont();
+
+        setGameOverTexture();
+
+        screenDurationTimer = System.currentTimeMillis();
     }
 
     public void update() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+        if (SCREEN_DURATION < (System.currentTimeMillis() - screenDurationTimer) / MILLISECONDS_DELIMITER) {
             game.setScreen(new MenuScreen(game));
         }
 
@@ -60,10 +69,17 @@ public class GameOverScreen extends ScreenAdapter {
 
     private void drawStatusBar() {
         font.getData().setScale(2, 2);
-        font.draw(game.spriteBatch,"Player 1\nTotal kills: " + totalKills[0], 250, 300);
 
-        if (isMultiplayer) {
-            font.draw(game.spriteBatch,"Player 2\nTotal kills: " + totalKills[1], 500, 300);
+        font.draw(game.spriteBatch, totalKills[0] + "", 272, 210);
+        font.draw(game.spriteBatch, totalKills[1] + "", 632, 210);
+    }
+
+    private void setGameOverTexture() {
+        if (isGameEnd) {
+            gameOverTexture = new Texture(Gdx.files.internal("gameOver\\EndScreen.png"));
+
+        } else {
+            gameOverTexture = new Texture(Gdx.files.internal("gameOver\\gameOver.png"));
         }
     }
 

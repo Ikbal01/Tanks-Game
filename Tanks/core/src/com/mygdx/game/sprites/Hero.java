@@ -8,21 +8,26 @@ import com.mygdx.game.enums.TankCategory;
 import com.mygdx.game.world.World;
 
 import java.util.Iterator;
-import java.util.Random;
 
 public class Hero extends Tank{
+    // Duration of WALL_BREAKING state
     private static final int WALL_BREAKING_TIME = 12;
+    // Duration of SHIELD state
     private static final int SHIELD_TIME = 12;
 
-    private Random random;
+    private static final int RESPAWN_POS_X = 208;
+    private static final int RESPAWN_POS_Y = 64;
 
-    private int lives;
+    // The progress of the tank
     private int stars;
     private int kills;
+    private int lives;
 
+    // Counts the elapsed time of WALL_COLLISION state
     private long wallBreakingTimer;
+    // Counts the elapsed time of SHIELD state
     private long shieldTimer;
-
+    // The sound which plays in shooting
     private Sound fireSound;
 
     public Hero(float x, float y, World world, int lives, int stars, int kills) {
@@ -32,24 +37,26 @@ public class Hero extends Tank{
         this.stars = stars;
         this.kills = kills;
 
-        random = new Random();
-
         state = State.SPAWNING;
         updateTankSpecif();
         updateAnimation();
 
+        // Default animation
         currAnimation = upMoveAnimation;
 
         fireSound = Gdx.audio.newSound(Gdx.files.internal("sound\\fire.wav"));
     }
 
+    /**
+     * Updates the hero's status as the game progresses.
+     */
     @Override
     public void update() {
         super.update();
 
         switch (state) {
             case SHIELD:
-                if (SHIELD_TIME < (System.currentTimeMillis() - shieldTimer) / 1000.0) {
+                if (isElapsed(SHIELD_TIME, shieldTimer)) {
                     state = State.NORMAL;
                 }
 
@@ -57,25 +64,14 @@ public class Hero extends Tank{
                 break;
 
             case WALL_BREAKING:
-                if (WALL_BREAKING_TIME < (System.currentTimeMillis() - wallBreakingTimer) / 1000.0) {
+                if (isElapsed(WALL_BREAKING_TIME, wallBreakingTimer)) {
                     state = State.NORMAL;
                 }
                 updateBullet();
                 break;
 
             case SUPER_TANK:
-                Iterator<Bullet> iterator = bullets.iterator();
-
-                while (iterator.hasNext()) {
-                    Bullet bullet = iterator.next();
-                    if (bullet.getState() == Bullet.State.DESTROYED) {
-                        iterator.remove();
-                    }
-                }
-
-                for (Bullet bullet : bullets) {
-                    bullet.update();
-                }
+                updateSuperTankBullets();
                 break;
 
             case DESTROYED:
@@ -87,13 +83,18 @@ public class Hero extends Tank{
         }
     }
 
+    /**
+     * If state is SUPER_TANK creates a bullet (shoots a bullet)
+     * and plays shooting sound. If there is no other bullets
+     * calls super.fire() and plays shooting sound.
+     */
     @Override
     public void fire() {
         if (getState() != State.SUPER_TANK) {
             if (bullets.size == 0) {
                 fireSound.play();
+                super.fire();
             }
-            super.fire();
         } else {
             fireSound.play();
             bullets.add(new Bullet(getMuzzle().x, getMuzzle().y,
@@ -101,8 +102,12 @@ public class Hero extends Tank{
         }
     }
 
+    /**
+     * Changes the category, armour, bullet's velocity
+     * and velocity depending on the progress of the tank.
+     */
     private void updateTankSpecif() {
-        color = Color.values()[3];
+        color = Color.YELLOW;
         int categoryIndex = (1 + stars) % 8;
         category = TankCategory.values()[categoryIndex];
         armour = category.getArmour();
@@ -110,10 +115,32 @@ public class Hero extends Tank{
         velocity = category.getVelocity();
     }
 
+    /**
+     * Updates the bullets in SUPER_TANK state (In SUPER_TANK state the
+     * tank can shoot multiple bullets otherwise can shoot only one bullet).
+     * Removes destroyed bullets.
+     */
+    private void updateSuperTankBullets() {
+        Iterator<Bullet> iterator = bullets.iterator();
+
+        while (iterator.hasNext()) {
+            Bullet bullet = iterator.next();
+
+            if (bullet.getState() == Bullet.State.DESTROYED) {
+                iterator.remove();
+            } else {
+                bullet.update();
+            }
+        }
+    }
+
     public void addExtraLife() {
         lives++;
     }
 
+    /**
+     * Improves tank's specifications
+     */
     public void improve() {
         if (state != State.SUPER_TANK) {
             stars++;
@@ -125,9 +152,9 @@ public class Hero extends Tank{
 
     private void respawn() {
         stars = 0;
-        position.set(208, 64);
-        bounds.setX(208);
-        bounds.setY(64);
+        position.set(RESPAWN_POS_X, RESPAWN_POS_Y);
+        bounds.setX(RESPAWN_POS_X);
+        bounds.setY(RESPAWN_POS_Y);
         currAnimation = upMoveAnimation;
 
         setSpawningState();
@@ -135,11 +162,20 @@ public class Hero extends Tank{
         updateAnimation();
     }
 
+    /**
+     * Returns to its previous position in a collision with a wall.
+     */
     @Override
     public void respondWallCollision() {
         goBack();
     }
 
+    /**
+     * Returns to its previous position if both
+     * tanks are not in SPAWNING state
+     *
+     * @param tank the tank which collides with this tank
+     */
     @Override
     public void respondTankCollision(Tank tank) {
         if (tank.state != State.SPAWNING && state != State.SPAWNING) {
@@ -147,6 +183,11 @@ public class Hero extends Tank{
         }
     }
 
+    /**
+     * Gets damage if bullet is shot by Enemy whereas freezes for a while.
+     *
+     * @param bullet the bullet which collides with this tank
+     */
     @Override
     public void respondBulletCollision(Bullet bullet) {
         if (state == State.SPAWNING || bullet.getState() != Bullet.State.FLYING
@@ -169,43 +210,64 @@ public class Hero extends Tank{
         }
     }
 
+    /**
+     * In this mod the tank does not get damage
+     */
     public void setShieldMod() {
         if (state != State.SUPER_TANK) {
-            setState(State.SHIELD);
+
+            state = State.SHIELD;
 
             shieldTimer = System.currentTimeMillis();
         }
     }
 
+    /**
+     * In this mod walls are destroyed in collision with this tank.
+     */
     public void setWallBreakingMod() {
         if (state != State.SUPER_TANK) {
-            setState(State.WALL_BREAKING);
+
+            state = State.WALL_BREAKING;
+
             wallBreakingTimer = System.currentTimeMillis();
         }
     }
 
-    public void setNormalMod() {
+    /**
+     * Returns to the normal state if the state is SUPER_TANK
+     */
+    public void setNormalMode() {
         if (state != State.DESTROYED) {
 
-            setState(State.NORMAL);
+            state = State.NORMAL;
+
             updateTankSpecif();
             updateAnimation();
             currAnimation = upMoveAnimation;
         }
     }
 
-    public void setSuperTankMod() {
+    /**
+     * Cheats mod
+     */
+    public void setSuperTankMode() {
         if (state != State.DESTROYED) {
 
-            setState(State.SUPER_TANK);
+            state = State.SUPER_TANK;
 
-            category = TankCategory.values()[7];
+            int mostPowerfulCat = 7;
+            category = TankCategory.values()[mostPowerfulCat];
             updateAnimation();
             currAnimation = upMoveAnimation;
             armour = 10;
             bulletVelocity = 8;
             velocity = 2.2f;
         }
+    }
+
+    public void increaseKills() {
+        kills++;
     }
 
     public Array<Bullet> getBullets() {
@@ -222,9 +284,5 @@ public class Hero extends Tank{
 
     public int getKills() {
         return kills;
-    }
-
-    public void increaseKills() {
-        kills++;
     }
 }

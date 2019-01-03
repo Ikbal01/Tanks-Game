@@ -10,11 +10,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.mygdx.game.Tanks;
 import com.mygdx.game.world.StageOption;
 
+/**
+ * Renders all menu options and handles logic.
+ */
 public class MenuScreen extends ScreenAdapter {
     public enum Difficulty {EASY(1), NORMAL(2), HARD(3);
         private int index;
 
-        private Difficulty(int index) {
+        Difficulty(int index) {
             this.index = index;
         }
 
@@ -31,7 +34,7 @@ public class MenuScreen extends ScreenAdapter {
     private int index;
 
     private boolean selected;
-    private boolean multiplayer;
+    private boolean isMultiplayer;
 
     private Sound menuSound;
 
@@ -39,14 +42,14 @@ public class MenuScreen extends ScreenAdapter {
         this.game = game;
 
         camera = new OrthographicCamera(Tanks.DESKTOP_SCREEN_WIDTH, Tanks.DESKTOP_SCREEN_HEIGHT);
-        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2, Tanks.DESKTOP_SCREEN_HEIGHT / 2, 0);
+        camera.position.set(Tanks.DESKTOP_SCREEN_WIDTH / 2f, Tanks.DESKTOP_SCREEN_HEIGHT / 2f, 0);
 
         cases = new Texture[8];
         setCases();
         index = 0;
 
         selected = false;
-        multiplayer = false;
+        isMultiplayer = false;
 
         menuSound = Gdx.audio.newSound(Gdx.files.internal("sound\\menu.wav"));
     }
@@ -67,7 +70,7 @@ public class MenuScreen extends ScreenAdapter {
                 index--;
             }
         } else {
-            if (!multiplayer) {
+            if (!isMultiplayer) {
 
                 if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) && index < 4) {
                     index++;
@@ -96,7 +99,7 @@ public class MenuScreen extends ScreenAdapter {
                     index = 2;
                 } else {
                     index = 5;
-                    multiplayer = true;
+                    isMultiplayer = true;
                 }
             } else {
                 setScreen();
@@ -108,11 +111,17 @@ public class MenuScreen extends ScreenAdapter {
         StageOption stageOption = new StageOption();
 
         stageOption.setDifficulty(difficulty());
-        stageOption.setLives(3, 3);
+
+        if (isMultiplayer) {
+            stageOption.setLives(3, 3);
+        } else {
+            stageOption.setLives(3, 0);
+        }
+
         stageOption.setStars(0, 0);
         stageOption.setTotalKills(0, 0);
         stageOption.setGame(game);
-        stageOption.setMultiplayer(multiplayer);
+        stageOption.setMultiplayer(isMultiplayer);
         stageOption.setStage(1);
 
         game.setScreen(new StageScreen(stageOption));

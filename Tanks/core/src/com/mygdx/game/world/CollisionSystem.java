@@ -7,18 +7,19 @@ import com.mygdx.game.treasures.Treasure;
 import static com.mygdx.game.world.World.MAP_HEIGHT;
 import static com.mygdx.game.world.World.MAP_WIDTH;
 
+/**
+ * Deals with collision detection and response for all game objects.
+ */
 public class CollisionSystem {
-    private static final int MAP_BOARDER_WIDTH = 16;
+    private static final int MAP_BORDER_WIDTH = 16;
 
     private World world;
 
     private Hero player1;
     private Hero player2;
     private Array<Tank> tanks;
-
     private Array<GameObject> staticGameObjects;
     private Treasure treasure;
-
 
     public CollisionSystem(World world) {
         this.world = world;
@@ -60,14 +61,18 @@ public class CollisionSystem {
         treasure = world.getTreasure();
     }
 
+    /**
+     * Keeps game objects within map boundaries.
+     * @param dynamicGameObject
+     */
     private void verifyMapBoundsCollision(DynamicGameObject dynamicGameObject) {
         int x = (int)dynamicGameObject.getPosition().x;
         int y = (int)dynamicGameObject.getPosition().y;
 
         int objectWidth = (int)dynamicGameObject.getBounds().getWidth();
 
-        if (x < MAP_BOARDER_WIDTH || y < MAP_BOARDER_WIDTH || x > (MAP_WIDTH + MAP_BOARDER_WIDTH) - objectWidth
-                || y > (MAP_HEIGHT + MAP_BOARDER_WIDTH) - objectWidth) {
+        if (x < MAP_BORDER_WIDTH || y < MAP_BORDER_WIDTH || x > (MAP_WIDTH + MAP_BORDER_WIDTH) - objectWidth
+                || y > (MAP_HEIGHT + MAP_BORDER_WIDTH) - objectWidth) {
             dynamicGameObject.respondWallCollision();
         }
     }
@@ -94,7 +99,7 @@ public class CollisionSystem {
                     break;
 
                 case BASE_DEFENDER:
-                    world.getFortress().setDefenceMod();
+                    world.getFortress().setDefenceMode();
                     break;
 
                 case TANK_IMPROVER:

@@ -7,48 +7,59 @@ import com.mygdx.game.screens.MenuScreen;
 import com.mygdx.game.sprites.Hero;
 import com.mygdx.game.sprites.Tank;
 
+/**
+ * Handles keyboard input.
+ */
 public class GameController {
     private World world;
+
     private Hero player1;
     private Hero player2;
-    private boolean multiplayer;
 
-    boolean isPaused;
+    private boolean isMultiplayer;
+    private boolean isPaused;
 
     public GameController(World world) {
         this.world = world;
 
         player1 = world.getPlayer1();
         player2 = world.getPlayer2();
-        multiplayer = world.isMultiplayer();
+        isMultiplayer = world.isMultiplayer();
 
         isPaused = false;
     }
 
     public void update() {
         handlePlayer1Input();
-        if (multiplayer) {
+        if (isMultiplayer) {
             handlePlayer2Input();
         }
 
         handlePauseMenuButtonInput();
-        hangleTankModInput();
+        handleTankModeInput();
     }
 
-    private void hangleTankModInput() {
+    /**
+     * Sets the tank mode for both players.
+     */
+    private void handleTankModeInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_9)) {
-            player1.setSuperTankMod();
-            player2.setSuperTankMod();
+            player1.setSuperTankMode();
+            player2.setSuperTankMode();
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0)) {
-            player1.setNormalMod();
-            player2.setNormalMod();
+            player1.setNormalMode();
+            player2.setNormalMode();
         }
     }
 
+    /**
+     * Pauses and unpauses the game.
+     */
     private void handlePauseMenuButtonInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
+            world.getMusic().stop();
             world.getGame().setScreen(new MenuScreen(world.getGame()));
         }
 

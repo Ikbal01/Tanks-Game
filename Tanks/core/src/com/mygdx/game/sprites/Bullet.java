@@ -9,31 +9,45 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.mygdx.game.enums.Direction;
 
+/**
+ * Represents an animated tank bullet.
+ */
 public class Bullet extends DynamicGameObject {
-    private static final int BULLET_WIDTH = 8;
-    private static final int BULLET_HEIGHT = 8;
 
-    private static final float EXPLOSION_DURATION = 0.15f;
+    // Size of bullet in pixels
+    public static final int BULLET_WIDTH = 8;
+    public static final int BULLET_HEIGHT = 8;
+
+    // Size of explosion animation in pixels
+    private static final int EXPLOSION_ANIM_WIDTH = 32;
+
+    // Duration of explosion animation
+    private static final float EXPLOSION_TIME = 0.15f;
+    
+    private static final float EXPLOSION_ANIM_FRAME_DURATION = 0.4f;
 
     private SpriteBatch spriteBatch;
 
-    private Texture texture;
+    // The image of bullet depends on the direction of movement
+    private Texture bulletImage;
+    // The image of bullet depends on its state
     private TextureRegion currentFrame;
 
     private Animation<TextureRegion> explosionAnimation;
 
     private Tank tank;
     private Direction direction;
+    // The explosion range of bullet
     private Rectangle bigBounds;
 
     public enum State {FLYING, EXPLODING, DESTROYED}
+    // Current state
     private State state;
 
-    private float deltaTime;
+    // Counts the elapsed time of explosion
+    private long explosionTimer;
 
-    private long elapsed;
-
-    private Sound wallCollSound;
+    private Sound collisionSound;
 
     public Bullet(float x, float y, Tank tank, Direction direction, SpriteBatch spriteBatch, float velocity) {
         super(x, y, BULLET_WIDTH, BULLET_HEIGHT);
@@ -45,12 +59,18 @@ public class Bullet extends DynamicGameObject {
 
         state = State.FLYING;
 
-        setTexture();
-        currentFrame = new TextureRegion(texture, 8, 8);
+        setBulletImage();
+        currentFrame = new TextureRegion(bulletImage, BULLET_WIDTH, BULLET_HEIGHT);
 
-        wallCollSound = Gdx.audio.newSound(Gdx.files.internal("sound\\wallColl.wav"));
+        collisionSound = Gdx.audio.newSound(Gdx.files.internal("sound\\wallColl.wav"));
     }
 
+    /**
+     * If state is FLYING the bullet moves in its direction with
+     * velocity value in every frame. If state is EXPLODING checks
+     * whether explosion animation time is elapsed and if it is true
+     * sets state DESTROYED.
+     */
     @Override
     public void update() {
 
@@ -60,20 +80,27 @@ public class Bullet extends DynamicGameObject {
                 break;
 
             case EXPLODING:
-                if (EXPLOSION_DURATION < (System.currentTimeMillis() - elapsed) / 1000.0) {
+                if (isElapsed(EXPLOSION_TIME, explosionTimer)) {
+
                     state = State.DESTROYED;
                 }
                 break;
         }
     }
 
+    /**
+     * Draws appropriate animation depending on the state.
+     *
+     * @param deltaTime the time between the start of the previous and the start of the current call to render.
+     */
     @Override
     public void draw(float deltaTime) {
-        this.deltaTime = deltaTime;
+
         switch (state) {
             case FLYING:
                 spriteBatch.draw(currentFrame, getPosition().x, getPosition().y);
                 break;
+
             case EXPLODING:
                 currentFrame = explosionAnimation.getKeyFrame(deltaTime, true);
                 spriteBatch.draw(currentFrame, getBigBounds().x, getBigBounds().y);
@@ -81,110 +108,113 @@ public class Bullet extends DynamicGameObject {
         }
     }
 
+    /**
+     * Sets explosion animation for a while. If this bullet
+     * is shot from Hero, plays collision sound.
+     */
     @Override
     public void explode() {
-        if (explosionAnimation == null) {
-            velocity = 4;
-            for (int i = 0; i < 3; i++) {
-                move();
-            }
+        if (state == State.FLYING) {
+
+            velocity = 12;
+            move();
 
             if (tank instanceof Hero) {
-                wallCollSound.play();
+                collisionSound.play();
             }
 
             setBigBounds();
-            setExplosionAnimation();
+            explosionAnimation = generateAnimation("bulletExplosion\\bulletExpl", 3,
+                    EXPLOSION_ANIM_WIDTH, EXPLOSION_ANIM_FRAME_DURATION);
 
             state = State.EXPLODING;
-            elapsed = System.currentTimeMillis();
+            explosionTimer = System.currentTimeMillis();
         }
     }
 
+    /**
+     * Changes the position of this bullet in direction
+     * of its movement with velocity value.
+     */
     private void move() {
         switch (direction) {
             case RIGHT:
-                getPosition().x += velocity;
-                getBounds().x += velocity;
+                position.x += velocity;
+                bounds.x += velocity;
                 break;
 
             case LEFT:
-                getPosition().x -= velocity;
-                getBounds().x -= velocity;
+                position.x -= velocity;
+                bounds.x -= velocity;
                 break;
 
             case DOWN:
-                getPosition().y -= velocity;
-                getBounds().y -= velocity;
+                position.y -= velocity;
+                bounds.y -= velocity;
                 break;
 
             case UP:
-                getPosition().y += velocity;
-                getBounds().y += velocity;
+                position.y += velocity;
+                bounds.y += velocity;
                 break;
         }
     }
 
-    private void setTexture() {
+    /**
+     * Generates the image of the bullet which depends
+     * on the direction of movement.
+     */
+    private void setBulletImage() {
         switch (direction) {
             case UP:
-                texture = new Texture(Gdx.files.internal("bullet\\bullet_up.png"));
+                bulletImage = new Texture(Gdx.files.internal("bullet\\bullet_up.png"));
                 break;
 
             case DOWN:
-                texture = new Texture(Gdx.files.internal("bullet\\bullet_down.png"));
+                bulletImage = new Texture(Gdx.files.internal("bullet\\bullet_down.png"));
                 break;
 
             case LEFT:
-                texture = new Texture(Gdx.files.internal("bullet\\bullet_left.png"));
+                bulletImage = new Texture(Gdx.files.internal("bullet\\bullet_left.png"));
                 break;
 
             case RIGHT:
-                texture = new Texture(Gdx.files.internal("bullet\\bullet_right.png"));
+                bulletImage = new Texture(Gdx.files.internal("bullet\\bullet_right.png"));
                 break;
         }
     }
 
-    @Override
-    public void setExplosionAnimation() {
-        TextureRegion[] explosionFrames = new TextureRegion[3];
-
-        Texture tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl1.png"));
-        explosionFrames[0] = new TextureRegion(tempTexture, 32, 32);
-
-        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl2.png"));
-        explosionFrames[1] = new TextureRegion(tempTexture, 32, 32);
-
-        tempTexture = new Texture(Gdx.files.internal("bulletExplosion\\bulletExpl3.png"));
-        explosionFrames[2] = new TextureRegion(tempTexture, 32, 32);
-
-        explosionAnimation = new  Animation<TextureRegion>(0.25f, explosionFrames);
-    }
-
+    /**
+     * Sets the bounds of explosion range.
+     */
     private void setBigBounds() {
         float x = 0;
         float y = 0;
+
         switch (direction) {
             case RIGHT:
-                x = getPosition().x - 24;
-                y = getPosition().y - 12;
+                x = position.x - 24;
+                y = position.y - 12;
                 break;
             case LEFT:
-                x = getPosition().x;
-                y = getPosition().y - 12;
+                x = position.x;
+                y = position.y - 12;
                 break;
             case DOWN:
-                x = getPosition().x - 12;
-                y = getPosition().y;
+                x = position.x - 12;
+                y = position.y;
                 break;
             case UP:
-                x = getPosition().x - 12;
-                y = getPosition().y - 24;
+                x = position.x - 12;
+                y = position.y - 24;
                 break;
         }
-        bigBounds = new Rectangle(x, y, 32, 32);
+        bigBounds = new Rectangle(x, y, BULLET_WIDTH * 4, BULLET_HEIGHT * 4);
     }
 
+    /**
+     * Explodes, if there is a wall collision and state is FLYING.
+     */
     @Override
     public void respondWallCollision() {
         if (state == State.FLYING) {
@@ -193,15 +223,28 @@ public class Bullet extends DynamicGameObject {
         }
     }
 
+    /**
+     * If there is a tank collision and the given tank is not
+     * the tank from which bullet is shot and its
+     * state is not SPAWNING, explodes. There is no collision
+     * between enemies.
+     *
+     * @param tank the tank which collides with the bullet
+     */
     @Override
     public void respondTankCollision(Tank tank) {
-        if (tank.state != Tank.State.SPAWNING && tank != this.tank) {
-            if (!(tank instanceof Enemy && this.tank instanceof Enemy)) {
+        if (tank.state != Tank.State.SPAWNING && tank != this.tank
+            && (!(tank instanceof Enemy && this.tank instanceof Enemy))) {
+
                 explode();
-            }
         }
     }
 
+    /**
+     * The bullet destroys without explosion animation
+     *
+     * @param bullet the bullet which collides with this bullet
+     */
     @Override
     public void respondBulletCollision(Bullet bullet) {
         state = State.DESTROYED;

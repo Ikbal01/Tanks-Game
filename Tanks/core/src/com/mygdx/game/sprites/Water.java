@@ -5,6 +5,7 @@ import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 
 public class Water extends StaticGameObject {
+
     public Water(MapObject cell, TiledMapTileLayer layer) {
         super(((RectangleMapObject)cell).getRectangle(), cell, layer);
     }

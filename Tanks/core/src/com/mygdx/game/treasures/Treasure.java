@@ -9,48 +9,48 @@ import com.mygdx.game.sprites.Tank;
 import com.mygdx.game.world.World;
 
 public abstract class Treasure extends GameObject {
-    public static final float LIFE_TIME = 12f;
+    private static final float LIFE_TIME = 12f;
 
     public enum TreasureType {BASE_DEFENDER, ENEMY_KILLER,
         EXTRA_LIFE, SHIELD, TANK_IMPROVER, TIME_STOPPER, WALL_BREAKER}
 
     public enum State {ACTIVE, EXPIRED, USED}
 
-    private Texture texture;
-    private State currentState;
-    private SpriteBatch spriteBatch;
-    private long startTime;
+    private State state;
     private TreasureType type;
+
+    private SpriteBatch spriteBatch;
+    private Texture texture;
+
     protected Sound sound;
+    private long startTime;
 
     public Treasure(float x, float y, SpriteBatch spriteBatch) {
         super(x, y, World.PIXELS_32, World.PIXELS_32);
         this.spriteBatch = spriteBatch;
+
+        state = State.ACTIVE;
         startTime = System.currentTimeMillis();
-        currentState = State.ACTIVE;
     }
 
+    /**
+     * Checks whether life time of treasure is elapsed.
+     * If is elapsed state is becoming EXPIRED (treasure is destroyed)
+     */
     public void update() {
-        if (LIFE_TIME < ((System.currentTimeMillis() - startTime) / 1000.0)) {
-            currentState = State.EXPIRED;
+        if (isElapsed(LIFE_TIME, startTime)) {
+
+            state = State.EXPIRED;
         }
     }
 
     public void draw() {
-        spriteBatch.draw(texture, getPosition().x, getPosition().y);
-    }
-
-    public State getState() {
-        return currentState;
-    }
-
-    protected void setTexture(Texture texture) {
-        this.texture = texture;
+        spriteBatch.draw(texture, position.x, position.y);
     }
 
     @Override
     public void respondTankCollision(Tank tank) {
-        currentState = State.USED;
+        state = State.USED;
         sound.play();
     }
 
@@ -59,11 +59,19 @@ public abstract class Treasure extends GameObject {
         // do nothing
     }
 
-    public TreasureType getType() {
-        return type;
-    }
-
     protected void setType(TreasureType type) {
         this.type = type;
+    }
+
+    protected void setTexture(Texture texture) {
+        this.texture = texture;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public TreasureType getType() {
+        return type;
     }
 }

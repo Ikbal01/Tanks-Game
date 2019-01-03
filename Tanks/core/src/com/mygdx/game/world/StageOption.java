@@ -3,6 +3,9 @@ package com.mygdx.game.world;
 import com.mygdx.game.Tanks;
 import com.mygdx.game.screens.MenuScreen;
 
+/**
+ * Deals with information specific to each stage, such as difficulty, number of enemies, etc.
+ */
 public class StageOption {
 
     private Tanks game;

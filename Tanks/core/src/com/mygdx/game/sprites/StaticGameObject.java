@@ -4,6 +4,9 @@ import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
 
+/**
+ * A non-animated game object.
+ */
 public abstract class StaticGameObject extends GameObject {
     public static int TILE_WIDTH = 8;
     public static int TILE_HEIGHT = 8;

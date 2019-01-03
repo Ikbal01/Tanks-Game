@@ -6,13 +6,14 @@ public enum Direction {
     DOWN(4),
     RIGHT(6);
 
-    private int colmn;
+    // Coordinate from png file
+    private int column;
 
-    private Direction(int colmn) {
-        this.colmn = colmn;
+    Direction(int column) {
+        this.column = column;
     }
 
-    public int getColmn() {
-        return colmn;
+    public int getColumn() {
+        return column;
     }
 }
