@@ -79,7 +79,7 @@ public class GameOverScreen extends ScreenAdapter {
             gameOverTexture = new Texture(Gdx.files.internal("gameOver\\EndScreen.png"));
 
         } else {
-            gameOverTexture = new Texture(Gdx.files.internal("gameOver\\gameOver.png"));
+            gameOverTexture = new Texture(Gdx.files.internal("gameOver\\GameOver.png"));
         }
     }
 
