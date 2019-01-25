@@ -1,5 +1,6 @@
 # Tanks Game
-Click https://www.dropbox.com/sh/0u56fmdcsohv105/AAD6zVem1DkWNYvTPqmBxtxZa?dl=0 to download. Extract and run Tanks-Game.jar to play
+Click https://www.dropbox.com/s/fx21q9xnr73dmwo/Tanks-Game.zip?dl=0 to download. Extract and run Tanks-Game.jar to play.
+Gameplay: https://www.youtube.com/watch?v=u-eLCGin9Oo&feature=youtu.be&fbclid=IwAR0G446l-6l0ZaR_s70Ybk2dwTjpt5miuzQkgldbfJ-DSaLDP5k-PSbIpVE
 
 ![stage2](https://github.com/Ikbal01/Tanks-Game/blob/master/Tanks/android/assets/gameImages/stageImage5.PNG)
 ![menu](https://github.com/Ikbal01/Tanks-Game/blob/master/Tanks/android/assets/gameImages/menuImage.PNG)
